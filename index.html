@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Quadratic Bezier Curve</title>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@100..900&display=swap" rel="stylesheet">
+
+    <link href="./out/output.css" rel="stylesheet">
+    <link href="./style.css" rel="stylesheet">
+  </head>
+  <body class="flex">
+    <aside class="fixed w-64 h-screen z-50 bg-slate-900 flex flex-col gap-2 overflow-y-scroll mb-4">
+      <div class="w-full flex flex-col gap-2">
+        <h1 class="font-extrabold text-2xl mx-4 mt-4">Quadratic Bezier Curve</h1>
+        <h2 class="font-bold text-md mx-4">Points</h2>
+        <div id="point-input-list" class="flex flex-col gap-2 w-full"></div>
+        <button id="add-point" class="mx-4 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 px-3 rounded-lg font-bold">+</button>
+      </div>
+
+
+      <div class="absolute bg-slate-900 w-full z-50 left-0 bottom-0 flex flex-col gap-2">
+        <div class="mx-4 mt-2 font-semibold">Time taken: 100 ms</div>
+        <button id="visualize-curve" class="mb-1 mx-4 bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold">Visualize Curve</button>
+        <button id="show-steps" class="mb-4 mx-4 bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold">Show Steps</button>
+      </div>
+    </aside>
+    
+    
+    <script type="module" src="/main.js"></script>
+  </body>
+</html>
