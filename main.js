@@ -26,21 +26,25 @@ const app = new Application();
 const leftMargin = 256; // width of the sidebar
 const canvasWidth = window.innerWidth-leftMargin;
 const canvasheight = window.innerHeight;
-await app.init({ background: '#1099bb', width:canvasWidth, height: canvasheight });
-app.canvas.style.position = 'fixed';
-app.canvas.style.top = 0;
-app.canvas.style.right = 0;
-app.canvas.style.height = '100%';
-document.body.appendChild(app.canvas);
 
-let graphics = new Graphics();
-graphics.circle(canvasWidth/2, canvasheight/2, 20);
-graphics.fill(0xff3333);
-graphics.interactive = true;
-graphics.on('click', (event) => {
-  graphics.x = 10
-});
-
-app.stage.addChild(graphics);
-app.ticker.add((time) => {
-});
+(async () =>
+{
+  await app.init({ background: '#1099bb', width:canvasWidth, height: canvasheight });
+  app.canvas.style.position = 'fixed';
+  app.canvas.style.top = 0;
+  app.canvas.style.right = 0;
+  app.canvas.style.height = '100%';
+  document.body.appendChild(app.canvas);
+  
+  let graphics = new Graphics();
+  graphics.circle(canvasWidth/2, canvasheight/2, 20);
+  graphics.fill(0xff3333);
+  graphics.interactive = true;
+  graphics.on('click', (event) => {
+    graphics.x = 10
+  });
+  
+  app.stage.addChild(graphics);
+  app.ticker.add((time) => {
+  });
+})();
