@@ -1,8 +1,12 @@
 import { Graphics } from "pixi.js";
+import { DragablePoint } from "./DragablePoint";
 
 
 export class LineFollow extends Graphics {
 
+  /**
+   * Refresh this line to follow both the targeted points
+   */
   update() {
     this.clear();
     this.moveTo(this.p1.x, this.p1.y);
@@ -11,6 +15,12 @@ export class LineFollow extends Graphics {
     this.stroke({ width: 3, color: this.color });
   }
 
+  /**
+   * 
+   * @param {DragablePoint} p1 first point
+   * @param {DragablePoint} p2 second point
+   * @param {string} color color
+   */
   constructor(p1, p2, color) {
     super();
     this.p1 = p1;
@@ -18,11 +28,10 @@ export class LineFollow extends Graphics {
     this.color = color;
     this.update();
     
-    this.p1.on('pointermove', () => {
+    this.p1.onMove.attach(() => {
       this.update();
     });
-
-    this.p2.on('pointermove', () => {
+    this.p2.onMove.attach(() => {
       this.update();
     });
   }
