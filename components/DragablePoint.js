@@ -54,6 +54,10 @@ export class DragablePoint extends Graphics {
     });
   }
 
+  addOnMoveListener(callback) {
+    this.onMove.attach(callback);
+  }
+
   /**
    * Set this point to be dragable with cursor
    * @param {Application} app the dependency to to the app is needed to add the event listener

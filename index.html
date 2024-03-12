@@ -12,20 +12,21 @@
     <link href="./style/style.css" rel="stylesheet">
   </head>
   <body class="flex">
-    <aside class="fixed w-64 h-screen z-50 bg-slate-900 flex flex-col gap-2 overflow-y-scroll mb-4">
+    <aside class="fixed right-0 w-64 h-screen z-50 bg-slate-900 flex flex-col gap-2 overflow-y-scroll mb-4">
       <div class="w-full flex flex-col gap-2">
         <h1 class="font-extrabold text-3xl mx-4 mt-4">Bezier Curve</h1>
         <h2 class="font-bold text-md mx-4">Iterations</h2>
-        <input type="number" class="bg-slate-800 duration-100 px-2 mx-4 py-1 text-slate-50 rounded-lg shadow-sm outline-none ring ring-inset ring-transparent focus:ring-indigo-500">
+        <input value="3" id="iterations" type="number" class="bg-slate-800 duration-100 px-2 mx-4 py-1 text-slate-50 rounded-lg shadow-sm outline-none ring ring-inset ring-transparent focus:ring-indigo-500">
         <h2 class="font-bold text-md mx-4">Points</h2>
         <div id="point-input-list" class="flex flex-col gap-2 w-full"></div>
-        <button id="add-point" class="mx-4 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 px-3 rounded-lg font-bold">+</button>
+        <button id="add-point" class="mx-4 mb-4 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 px-3 rounded-lg font-bold">+</button>
       </div>
 
 
-      <div class="absolute bg-slate-900 w-full z-50 left-0 bottom-0 flex flex-col gap-2">
-        <div class="mx-4 mt-2 font-semibold">Time taken: 100 ms</div>
+      <div class="fixed bg-slate-900 z-50 left-0 bottom-0 flex flex-col gap-2 rounded-tr-xl">
+        <div id="time-taken" class="mx-4 mt-2 font-semibold text-sm">Time taken: 100 ms</div>
         <button id="visualize-curve" class="mb-1 mx-4 bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold">Visualize Curve</button>
+        <button id="clear-curves" class="mb-1 mx-4 bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold">Clear Curves</button>
         <button id="show-steps" class="mb-4 mx-4 bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold">Show Steps</button>
       </div>
     </aside>

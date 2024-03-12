@@ -3,8 +3,9 @@ import { DragablePoint } from "../components/DragablePoint";
 import { LineFollow } from "../components/LineFollow";
 import Colors from "../config/color.json";
 import Data from "../config/data.json";
+import QuadraticBezierCurve from "./QuadraticBezierCurve";
 
-export default class QuadraticBezierCurve{
+export default class BezierCurve{
   
   /**
    * Get a point that follows the center of two points
@@ -32,40 +33,44 @@ export default class QuadraticBezierCurve{
     return new Promise(resolve => setTimeout(resolve, ms));
   }
   
+  
 
   /**
    * Generate a quadratic bezier curve based on the points and number of iterations
+   * @param {DragablePoint[]} p list of points. 
    * @param {number} iterations number of iterations. The bigger, the smoother. 
    * @param {Container} container container to draw the curve.
    */
-  generateToContainer(p0, p1, p2, iterations, container) {
-    const q0 = this.getFollowedDragablePointInCenter(p0, p1); // non output, next iteration
-    const q1 = this.getFollowedDragablePointInCenter(p1, p2); // non output, next iteration
+  generateToContainer(p, iterations, container) {
+    // quadraticBezierCurve = new QuadraticBezierCurve();
+
+    const q0 = this.getFollowedDragablePointInCenter(p[0], p[1]); // non output, next iteration
+    const q1 = this.getFollowedDragablePointInCenter(p[1], p[2]); // non output, next iteration
     const r0 = this.getFollowedDragablePointInCenter(q0, q1); // non output, next iteration
 
-    const p0r0 = this.getFollowedLine(p0, r0, Colors.slate50); // output
-    const r0p2 = this.getFollowedLine(r0, p2, Colors.slate50); // output
+    const p0r0 = this.getFollowedLine(p[0], r0, Colors.slate50); // output
+    const r0p2 = this.getFollowedLine(r0, p[2], Colors.slate50); // output
 
     if(iterations > 1) {
-      this.generateToContainerRecursive(p0, q0, r0, iterations - 1, container);
-      this.generateToContainerRecursive(r0, q1, p2, iterations - 1, container);
+      this.generateToContainerRecursive([p[0], q0, r0], iterations - 1, container);
+      this.generateToContainerRecursive([r0, q1, p[2]], iterations - 1, container);
     } else {
       container.addChild(p0r0); // output
       container.addChild(r0p2); // output
     }
   }
 
-  generateToContainerRecursive(p0, p1, p2, iterations, container) {
-    const q0 = this.getFollowedDragablePointInCenter(p0, p1); // non output, next iteration
-    const q1 = this.getFollowedDragablePointInCenter(p1, p2); // non output, next iteration
+  generateToContainerRecursive(p, iterations, container) {
+    const q0 = this.getFollowedDragablePointInCenter(p[0], p[1]); // non output, next iteration
+    const q1 = this.getFollowedDragablePointInCenter(p[1], p[2]); // non output, next iteration
     const r0 = this.getFollowedDragablePointInCenter(q0, q1); // non output, next iteration
 
-    const p0r0 = this.getFollowedLine(p0, r0, Colors.slate50); // output
-    const r0p2 = this.getFollowedLine(r0, p2, Colors.slate50); // output
+    const p0r0 = this.getFollowedLine(p[0], r0, Colors.slate50); // output
+    const r0p2 = this.getFollowedLine(r0, p[2], Colors.slate50); // output
 
     if(iterations > 1) {
-      this.generateToContainerRecursive(p0, q0, r0, iterations - 1, container);
-      this.generateToContainerRecursive(r0, q1, p2, iterations - 1, container);
+      this.generateToContainerRecursive([p[0], q0, r0], iterations - 1, container);
+      this.generateToContainerRecursive([r0, q1, p[2]], iterations - 1, container);
     } else {
       container.addChild(p0r0); // output
       container.addChild(r0p2); // output
