@@ -1,28 +1,26 @@
-import { Graphics, Circle, Text, Application } from 'pixi.js';
+import { Graphics, Circle, Text, Application, Point, GraphicsContext, Rectangle } from 'pixi.js';
 import Event from '../event/Event.js';
+import Data from "../config/data.json"
+import { app } from '../main.js';
 
 export class DragablePoint extends Graphics {
+
+  static graphicContext = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.slate50).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.slate50);
+
   /**
    * @param {number} x x position
    * @param {number} y y position
    * @param {number} radius radius of point
    * @param {string} color color of point
    */
-  constructor(x, y, radius, color) {
+  constructor(x, y) {
     super();
-    this.radius = radius;
-    this.circle(0, 0, radius);
-    this.fill(color);
-
-    this.circle(0, 0, radius*0.80);
-    this.cut();
-
-    this.circle(0, 0, radius*0.45);
-    this.fill(color);
+    this.context = DragablePoint.graphicContext;
+    this.interactive = false;
+    this.hitArea = new Rectangle(0,0,0,0);
        
     this.onMove = new Event(this);
     this.setPosition(x, y);
-
   }
 
   /**
@@ -36,6 +34,8 @@ export class DragablePoint extends Graphics {
       this.onMove.notify({x: this.x, y: this.y})
     }
   }
+
+  sync() {}
 
   /**
    * Make this point always follow the center of two other points
@@ -68,7 +68,7 @@ export class DragablePoint extends Graphics {
 
     this.eventMode = 'static';
     this.cursor = 'pointer';
-    this.hitArea = new Circle(0, 0, this.radius);
+    this.hitArea = new Circle(0, 0, Data.pointRadius*3);
     this.on('pointerover', () => {
       this.alpha = 0.75;
     });
@@ -89,7 +89,7 @@ export class DragablePoint extends Graphics {
   }
   static onDragMove(event){
     if (DragablePoint.currentTarget){
-      DragablePoint.currentTarget.setPosition(event.data.global.x, event.data.global.y);
+      DragablePoint.currentTarget.setPosition(event.data.global.x, -event.data.global.y + app.renderer.height);
     }
   }
   static onDragEnd(){

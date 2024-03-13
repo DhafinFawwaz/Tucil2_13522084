@@ -1,9 +1,7 @@
 {
-  "rsm": "10",
-  "rmd": "20",
-  "rlg": "40",
-  "rxl": "80",
-  "r2xl": "160",
-
+  "lineWidth": 3,
+  "pointRadius": 10,
+  "slate50": "#f8fafc",
+  "slate950": "#020617",
   "leftMargin": 256
 }

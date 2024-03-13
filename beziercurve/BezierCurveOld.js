@@ -3,8 +3,9 @@ import { DragablePoint } from "../components/DragablePoint";
 import { LineFollow } from "../components/LineFollow";
 import Colors from "../config/color.json";
 import Data from "../config/data.json";
+import QuadraticBezierCurve from "./QuadraticBezierCurve";
 
-export default class QuadraticBezierCurve{
+export default class BezierCurveOld{
   
   /**
    * Get a point that follows the center of two points
@@ -31,24 +32,87 @@ export default class QuadraticBezierCurve{
   async wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
+
+
+  /**
+   * 
+   * @param {DragablePoint} p 
+   * @param {number} iteration 
+   * @returns DragablePoint[]
+   */
+  generateLeftRight(p, iteration) {
+    return []
+  }
   
 
   /**
    * Generate a quadratic bezier curve based on the points and number of iterations
+   * @param {DragablePoint[]} p list of points. 
    * @param {number} iterations number of iterations. The bigger, the smoother. 
    * @param {Container} container container to draw the curve.
    */
-  generateToContainer(p0, p1, p2, iterations, container) {
-    const q0 = this.getFollowedDragablePointInCenter(p0, p1); // non output, next iteration
-    const q1 = this.getFollowedDragablePointInCenter(p1, p2); // non output, next iteration
+  generateToContainer(p, iterations, container) {
+
+    const length = p.length;
+    
+    /** @type {DragablePoint[]} */
+    const centerList = [];
+    for(let i = 0; i < length-1; i++) {
+      centerList.push(this.getFollowedDragablePointInCenter(p[i], p[i+1]));
+    }
+
+    /** @type {DragablePoint[]} */
+    const subCenterList = [];
+    for(let i = 0; i < length-2; i++) {
+      subCenterList.push(this.getFollowedDragablePointInCenter(centerList[i], centerList[i+1]));
+    }
+
+    /** @type {DragablePoint[]} */
+    const subSubCenterList = [];
+    for(let i = 0; i < length-3; i++) {
+      subSubCenterList.push(this.getFollowedDragablePointInCenter(subCenterList[i], subCenterList[i+1]));
+    }
+
+    /** @type {DragablePoint[]} */
+    const left = [p[0], centerList[0], subCenterList[0], subSubCenterList[0]];
+    /** @type {DragablePoint[]} */
+    const right = [p[length-1], centerList[length-2], subCenterList[length-3], subSubCenterList[length-4]];
+
+    // container.addChild(subSubCenterList[0]);
+
+    /** @type {LineFollow[]} */
+    const l1 = this.getFollowedLine(p[0], subSubCenterList[0]);
+    /** @type {LineFollow[]} */
+    const l2 = this.getFollowedLine(subSubCenterList[0], p[length-1]);
+
+    if(iterations > 1){
+      for(let i = 0; i < length; i++) {
+        this.generateToContainer(left, iterations - 1, container);
+        this.generateToContainer(right, iterations - 1, container);
+      }
+    } else {
+      container.addChild(l1, l2);
+    }
+  }
+
+
+  /**
+   * Generate a quadratic bezier curve based on the points and number of iterations
+   * @param {DragablePoint[]} p list of points. 
+   * @param {number} iterations number of iterations. The bigger, the smoother. 
+   * @param {Container} container container to draw the curve.
+   */
+  generateToContainerRecursive(p, iterations, container) {
+    const q0 = this.getFollowedDragablePointInCenter(p[0], p[1]); // non output, next iteration
+    const q1 = this.getFollowedDragablePointInCenter(p[1], p[2]); // non output, next iteration
     const r0 = this.getFollowedDragablePointInCenter(q0, q1); // non output, next iteration
 
-    const p0r0 = this.getFollowedLine(p0, r0, Colors.slate50); // output
-    const r0p2 = this.getFollowedLine(r0, p2, Colors.slate50); // output
+    const p0r0 = this.getFollowedLine(p[0], r0, Colors.slate50); // output
+    const r0p2 = this.getFollowedLine(r0, p[2], Colors.slate50); // output
 
     if(iterations > 1) {
-      this.generateToContainer(p0, q0, r0, iterations - 1, container);
-      this.generateToContainer(r0, q1, p2, iterations - 1, container);
+      this.generateToContainerRecursive(p, iterations - 1, container);
+      this.generateToContainerRecursive(p, iterations - 1, container);
     } else {
       container.addChild(p0r0); // output
       container.addChild(r0p2); // output
