@@ -37,6 +37,7 @@ export class DragablePoint extends Graphics {
   }
 
   sync() {}
+  syncAble() { return false; }
 
   /**
    * Make this point always follow the center of two other points

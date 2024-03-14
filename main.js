@@ -9,6 +9,7 @@ import getIteration from "./components/IterationInput";
 import CenterPoint from "./beziercurve/CenterPoint";
 import BezierCurveOld from "./beziercurve/BezierCurveOld";
 import { CoordinateText } from "./components/CoordinateText";
+import { BezierCurveAnimator } from "./beziercurve/BezierCurveAnimator";
 
 export const app = new Application();
 
@@ -39,7 +40,7 @@ lineResultGraphic.hitArea = new Rectangle(0,0,0,0)
 
 /** ====================================================================== **/
 
-/** @type {Graphics} animated steps graphics */ 
+/** @type {Graphics} unanimated steps graphics */ 
 const stepsGraphic = new Graphics();
 stepsGraphic.interactive = false;
 stepsGraphic.hitArea = new Rectangle(0,0,0,0)
@@ -52,8 +53,17 @@ let stepLines = [];
 
 /** ====================================================================== **/
 
+/** @type {number} The duration of each step in seconds */
+let stepDuration = 0.5;
+
 /** @type {BezierCurve} The curve itself */ 
 const bezierCurve = new BezierCurve();
+
+/** @type {Graphics} animated steps graphics */ 
+const animatedStepsGraphic = new Graphics();
+
+/** @type {BezierCurveAnimator} The curve animator */
+const bezierCurveAnimator = new BezierCurveAnimator(animatedStepsGraphic, stepDuration);
 
 /** ================================================ Redraws ================================================ **/
 /** sync the lines with the points */
@@ -179,14 +189,12 @@ async function showStepsAnimatedConcurent() {
   bezierCurve.clear();
   stepPoints = [];
   stepLines = [];
-  await bezierCurve.generateWithSteps(p, iterations, 100, p => {
-    stepPoints.push(p);
-    drawPointStep(p);
-  }, p => {
-    stepLines.push(p);
-    drawLineStep(p);
-  });
   visualizationState = 2;
+  await bezierCurve.generateWithSteps(p, iterations, stepDuration*200, p => {
+    bezierCurveAnimator.animatePointStep(p, () => stepPoints.push(p));
+  }, p => {
+    bezierCurveAnimator.animateLineStep(p, () => stepLines.push(p));
+  });
 }
 /** ================================================ GUI Function End ================================================ **/
 
@@ -197,7 +205,7 @@ function InitializeCurves() {
   visualizationState = 0;
   graphicContainer.removeChildren();
   inputPoints.forEach(p => graphicContainer.addChild(p));
-  graphicContainer.addChild(lineResultGraphic, inputLinesGraphic, stepsGraphic);
+  graphicContainer.addChild(lineResultGraphic, inputLinesGraphic, stepsGraphic, animatedStepsGraphic);
   redrawInputLines();
   lineResultGraphic.clear();
   stepPoints = [];
@@ -244,6 +252,8 @@ addInput(canvasWidth/2+350, canvasheight/2-250);
     redrawInputLines();
     if(visualizationState === 1) redrawLineResult();
     else if(visualizationState === 2) redrawStepLineResult();
+
+    bezierCurveAnimator.update(ticker);
   });
 
 })();

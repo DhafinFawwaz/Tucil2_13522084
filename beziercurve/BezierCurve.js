@@ -198,16 +198,17 @@ export default class BezierCurve{
   async generateWithSteps(p, iterations, delay, onStepPointFinished, onStepLineFinished) {
     /** @type {[DragablePoint[], DragablePoint[], DragablePoint[]]} */
     const [left, right, centerFlatList] = this.generateLeftRight(p);
-    this.centerPointWaste.push(...centerFlatList);
+    // this.centerPointWaste.push(...centerFlatList);
    
     const length = p.length;
-    for(let i = 0; i < length-2; i++) {
-      onStepPointFinished(centerFlatList[i]);   await this.wait(delay);
+    for(let i = 0; i < length-1; i++) {
+      onStepPointFinished(centerFlatList[i]);  await this.wait(delay);
     }
 
-    // The rest are lines
-    for(let i = length-2; i < centerFlatList.length; i++) {
-      onStepLineFinished(centerFlatList[i]);    await this.wait(delay);
+    // The rest are lines and points
+    for(let i = length-1; i < centerFlatList.length; i++) {
+      onStepLineFinished(centerFlatList[i]);   await this.wait(delay);
+      onStepPointFinished(centerFlatList[i]);  await this.wait(delay);
     }
 
 
@@ -223,8 +224,8 @@ export default class BezierCurve{
       /** @type {CenterPoint} */
       const l2 = new CenterPoint(left[length-1], right[0]);
       
-      onStepLineFinished(l1); await this.wait(delay);
-      onStepLineFinished(l2); await this.wait(delay);
+      onStepLineFinished(l1); // await this.wait(delay);
+      onStepLineFinished(l2); // await this.wait(delay);
     }
   }
 }

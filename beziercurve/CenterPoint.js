@@ -1,4 +1,5 @@
 import { Point } from "pixi.js";
+import { lerp } from "./math";
 
 /**
  * Contain position and reference to both points. Call sync() to update the position of this point to be in the center of both points.
@@ -15,5 +16,13 @@ export default class CenterPoint extends Point {
   sync() {
     this.x = (this.point1.x + this.point2.x)/2;
     this.y = (this.point1.y + this.point2.y)/2;
+  }
+
+  syncAble() {
+    return true;
+  }
+
+  getProgressPoint(progress) {
+    return new Point(lerp(this.point1.x, this.point2.x, progress), lerp(this.point1.y, this.point2.y, progress));
   }
 }
