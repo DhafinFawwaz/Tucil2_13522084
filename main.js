@@ -8,6 +8,7 @@ import setTimeTaken from "./components/TimeTaken";
 import getIteration from "./components/IterationInput";
 import CenterPoint from "./beziercurve/CenterPoint";
 import BezierCurveOld from "./beziercurve/BezierCurveOld";
+import { CoordinateText } from "./components/CoordinateText";
 
 export const app = new Application();
 
@@ -122,13 +123,16 @@ function drawPointStep(p){
 function addInput(defaultX, defaultY) {
 
   const dragablePoint = new DragablePoint(defaultX, defaultY);
+  const coordinateText = new CoordinateText();
+  const name = `P${highestId}`;
+  coordinateText.attachToDraggablePoint(dragablePoint, 10, 10, name);
   dragablePoint.setDragable(app);
   
   graphicContainer.addChild(dragablePoint);
   inputPoints.push(dragablePoint);
   redrawInputLines();
 
-  const [newInput, inputX, inputY] = PointInput("P"+highestId, defaultX, defaultY, 
+  const [newInput, inputX, inputY] = PointInput(name, defaultX, defaultY, 
     (div) => { // onRemove
       highestId--;
       graphicContainer.removeChild(dragablePoint);
@@ -175,7 +179,7 @@ async function showStepsAnimatedConcurent() {
   bezierCurve.clear();
   stepPoints = [];
   stepLines = [];
-  await bezierCurve.generateQuadraticWithSteps(p, iterations, 100, p => {
+  await bezierCurve.generateWithSteps(p, iterations, 100, p => {
     stepPoints.push(p);
     drawPointStep(p);
   }, p => {
@@ -189,9 +193,6 @@ async function showStepsAnimatedConcurent() {
 
 
 /** ================================================ Initialization ================================================ **/
-function putAllInputPointsAbove() {
-  inputPoints.forEach();
-}
 function InitializeCurves() {
   visualizationState = 0;
   graphicContainer.removeChildren();
@@ -219,6 +220,7 @@ addInput(canvasWidth/2+350, canvasheight/2-250);
 (async () =>
 {
   await app.init({ background: Data.slate950, width:canvasWidth, height: canvasheight });
+  // await app.init({ background: Data.slate950, resizeTo: window });
   app.stage.position.y = app.renderer.height / app.renderer.resolution;
   app.stage.scale.y = -1;
 

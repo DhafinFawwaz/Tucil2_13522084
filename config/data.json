@@ -1,7 +1,14 @@
 {
   "lineWidth": 3,
   "pointRadius": 10,
+  "pointFontSize": 14,
+  "pointOffset": {
+    "x": 10,
+    "y": 10
+  },
   "slate50": "#f8fafc",
   "slate950": "#020617",
+  "indigo600": "#4f46e5",
+  "indigo300": "#a5b4fc",
   "leftMargin": 256
 }

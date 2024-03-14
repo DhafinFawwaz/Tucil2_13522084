@@ -88,14 +88,14 @@ export default class BezierCurve{
     const p1p2 = new CenterPoint(p[1], p[2]);
     const q0q1 = new CenterPoint(q0, q1);
 
-    onStepPointFinished(p[1]); await this.wait(delay);
-    onStepPointFinished(p[2]); await this.wait(delay);
+    // onStepPointFinished(p[1]); await this.wait(delay);
+    // onStepPointFinished(p[2]); await this.wait(delay);
     onStepPointFinished(q0);   await this.wait(delay);
     onStepPointFinished(q1);   await this.wait(delay);
     onStepPointFinished(r0);   await this.wait(delay);
 
-    onStepLineFinished(p0p1); await this.wait(delay);
-    onStepLineFinished(p1p2); await this.wait(delay);
+    // onStepLineFinished(p0p1); await this.wait(delay);
+    // onStepLineFinished(p1p2); await this.wait(delay);
     onStepLineFinished(q0q1); await this.wait(delay);
 
     if(iterations > 1) {
@@ -116,13 +116,6 @@ export default class BezierCurve{
   async wait(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
   }
-
-
-
-
-
-
-
 
 
 
@@ -174,13 +167,7 @@ export default class BezierCurve{
     const [left, right, centerFlatList] = this.generateLeftRight(p);
     this.centerPointWaste.push(...centerFlatList);
 
-    // container.addChild(subSubCenterList[0]);
     const length = p.length;
-
-    /** @type {CenterPoint} */
-    const l1 = new CenterPoint(left[0], left[length-1]);
-    /** @type {CenterPoint} */
-    const l2 = new CenterPoint(left[length-1], right[0]);
 
     if(iterations > 1){
       for(let i = 0; i < length; i++) {
@@ -188,7 +175,56 @@ export default class BezierCurve{
         this.generate(right, iterations - 1);
       }
     } else {
+
+      /** @type {CenterPoint} */
+      const l1 = new CenterPoint(left[0], left[length-1]);
+      /** @type {CenterPoint} */
+      const l2 = new CenterPoint(left[length-1], right[0]);
+
       this.centerPointResult.push(l1, l2);
+    }
+  }
+
+  /**
+   * Generate a quadratic bezier curve based on the points and number of iterations
+   * @param {CenterPoint[]} p number of iterations. The bigger, the smoother. 
+   * @param {number} iterations number of iterations. The bigger, the smoother. 
+   * @param {CenterPoint[]} centerPointResult list of center points result.
+   * @param {CenterPoint[]} centerPointWaste list of center points used in processing.
+   * @param {number} delay Wait time.
+   * @param {OnStepFinishedCallback} onStepPointFinished Call back.
+   * @param {OnStepFinishedCallback} onStepLineFinished Call back.
+   */
+  async generateWithSteps(p, iterations, delay, onStepPointFinished, onStepLineFinished) {
+    /** @type {[DragablePoint[], DragablePoint[], DragablePoint[]]} */
+    const [left, right, centerFlatList] = this.generateLeftRight(p);
+    this.centerPointWaste.push(...centerFlatList);
+   
+    const length = p.length;
+    for(let i = 0; i < length-2; i++) {
+      onStepPointFinished(centerFlatList[i]);   await this.wait(delay);
+    }
+
+    // The rest are lines
+    for(let i = length-2; i < centerFlatList.length; i++) {
+      onStepLineFinished(centerFlatList[i]);    await this.wait(delay);
+    }
+
+
+    if(iterations > 1){
+      for(let i = 0; i < length; i++) {
+        this.generateWithSteps(left, iterations - 1, delay, onStepPointFinished, onStepLineFinished);
+        this.generateWithSteps(right, iterations - 1, delay, onStepPointFinished, onStepLineFinished);
+      }
+    } else {
+
+      /** @type {CenterPoint} */
+      const l1 = new CenterPoint(left[0], left[length-1]);
+      /** @type {CenterPoint} */
+      const l2 = new CenterPoint(left[length-1], right[0]);
+      
+      onStepLineFinished(l1); await this.wait(delay);
+      onStepLineFinished(l2); await this.wait(delay);
     }
   }
 }

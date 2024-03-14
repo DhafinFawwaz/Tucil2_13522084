@@ -1,4 +1,4 @@
-import { Graphics, Circle, Text, Application, Point, GraphicsContext, Rectangle } from 'pixi.js';
+import { Graphics, Circle, Text, Application, Point, GraphicsContext, Rectangle, BitmapText, Filter } from 'pixi.js';
 import Event from '../event/Event.js';
 import Data from "../config/data.json"
 import { app } from '../main.js';
@@ -21,6 +21,7 @@ export class DragablePoint extends Graphics {
        
     this.onMove = new Event(this);
     this.setPosition(x, y);
+
   }
 
   /**
@@ -68,12 +69,14 @@ export class DragablePoint extends Graphics {
 
     this.eventMode = 'static';
     this.cursor = 'pointer';
-    this.hitArea = new Circle(0, 0, Data.pointRadius*3);
+    this.hitArea = new Circle(0, 0, Data.pointRadius*4);
     this.on('pointerover', () => {
       this.alpha = 0.75;
+      // this.tint = Data.indigo600;
     });
     this.on('pointerout', () => {
       this.alpha = 1;
+      // this.tint = 0xFFFFFF;
     });
   }
 
