@@ -12,25 +12,60 @@
     <link href="./style/style.css" rel="stylesheet">
   </head>
   <body class="flex">
-    <aside class="fixed right-0 w-64 h-screen z-50 bg-slate-900 flex flex-col gap-2 overflow-y-scroll mb-4">
+
+    <!-- Clickable area to hide sidebar -->
+    <div id="sidebar-close" class="fixed inset-0 z-30 bg-transparent block lg:hidden"></div>
+
+    <!-- Top Right Sidebar Toggle Button -->
+    <button id="sidebar-open" class="p-3 m-2 fixed z-30 top-0 right-0 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 rounded-lg font-bold">
+      <svg class="self-center" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 8 8"><path fill="currentColor" d="M0 1v1h8V1zm0 2.97v1h8v-1zm0 3v1h8v-1z"/></svg>
+    </button>
+
+
+    <!-- Right Sidebar -->
+    <aside id="right-sidebar" class="fixed right-0 w-64 h-screen z-40 bg-slate-900 flex flex-col gap-2 overflow-y-scroll mb-4">
       <div class="w-full flex flex-col gap-2">
         <h1 class="font-extrabold text-3xl mx-4 mt-4">Bezier Curve</h1>
         <h2 class="font-bold text-md mx-4">Iterations</h2>
-        <input value="3" id="iterations" type="number" class="bg-slate-800 duration-100 px-2 mx-4 py-1 text-slate-50 rounded-lg shadow-sm outline-none ring ring-inset ring-transparent focus:ring-indigo-500">
+        <input value="3" id="iterations" type="number" class="bg-slate-800 duration-100 px-2 mx-4 py-1 text-slate-50 rounded-lg shadow-sm outline-none ring-2 ring-inset ring-transparent focus:ring-indigo-500">
         <h2 class="font-bold text-md mx-4">Points</h2>
         <div id="point-input-list" class="flex flex-col gap-2 w-full"></div>
         <button id="add-point" class="mx-4 mb-4 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 px-3 rounded-lg font-bold">+</button>
       </div>
-
-
-      <div class="fixed bg-slate-900 z-50 left-0 bottom-0 flex flex-col gap-2 rounded-tr-xl">
-        <div id="time-taken" class="mx-4 mt-2 font-semibold text-sm">Time taken: 100 ms</div>
-        <button id="visualize-curve" class="mb-1 mx-4 bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold">Visualize Curve</button>
-        <button id="clear-curve" class="mb-1 mx-4 bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold">Clear Curve</button>
-        <button id="show-steps" class="mb-4 mx-4 bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold">Show Steps</button>
-      </div>
     </aside>
     
+    <!-- Bottom Left Button -->
+    <aside class="fixed p-4 bg-slate-900 z-40 left-0 bottom-0 flex flex-col gap-2 rounded-tr-xl w-56">
+      <div id="time-taken" class="font-semibold text-sm">Time taken: -</div>
+
+      <!-- Brute Force, Divide & Conquer -->
+      <div class="flex flex-col">
+        <button disabled id="divide-and-conquer" class="disabled:bg-rose-600 disabled:text-slate-50 hover:bg-slate-50 hover:text-slate-900 bg-slate-800 duration-100 px-3 py-1 font-bold rounded-t-xl">Divide & Conquer</button>
+        <button id="brute-force" class="disabled:bg-rose-600 disabled:text-slate-50 hover:bg-slate-50 hover:text-slate-900 bg-slate-800 duration-100 px-3 py-1 font-bold rounded-b-xl">Brute Force</button>
+      </div>
+      
+      <!-- Visualize Curve, Clear Curve -->
+      <div class="flex gap-2">
+        <button id="visualize-curve" class="bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold w-full">Visualize Curve</button>
+        <button id="clear-curve" class="bg-slate-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 w-12 flex justify-center rounded-xl font-bold">
+          <svg class="self-center" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><g fill="none" stroke="currentColor"><path fill="currentColor" stroke-linejoin="round" stroke-width="4.3" d="M44.782 24.17L31.918 7.1L14.135 20.5L27.5 37l3.356-2.336z"/><path stroke-linejoin="round" stroke-width="4.3" d="m27.5 37l-3.839 3.075l-10.563-.001l-2.6-3.45l-6.433-8.536L14.5 20.225"/><path stroke-linecap="round" stroke-width="4.5" d="M13.206 40.072h31.36"/></g></svg>
+        </button>
+      </div>
+
+      <div class="flex gap-2">
+        <div class="font-semibold text-sm self-center whitespace-nowrap">Step Duration: </div>
+        <input size="1" step="0.05" type="number" id="step-duration" class="bg-slate-800 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none ring-2 ring-transparent focus:ring-indigo-500 ring-inset min-w-0" value="0.5">
+      </div>
+
+
+      <!-- Show Steps -->
+      <button id="show-steps" class="bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900  duration-100 px-3 py-1 rounded-xl font-bold">Show Steps</button>
+    </aside>
+
+    <!-- Top Left Credits -->
+    <a href="https://dhafinfawwaz.github.io/" target="_blank" class="z-40 fixed top-0 left-0 pl-2 pt-2 font-semibold text-sm text-blue-300 hover:text-blue-200 hover:underline flex group">Created by Dhafin 
+      <svg class="self-center ml-1 group-hover:underline" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20"><g fill="currentColor"><path d="M11 3a1 1 0 1 0 0 2h2.586l-6.293 6.293a1 1 0 1 0 1.414 1.414L15 6.414V9a1 1 0 1 0 2 0V4a1 1 0 0 0-1-1z"/><path d="M5 5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-3a1 1 0 1 0-2 0v3H5V7h3a1 1 0 0 0 0-2z"/></g></svg>
+    </a>
     
     <script type="module" src="/main.js"></script>
   </body>

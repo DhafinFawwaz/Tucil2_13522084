@@ -93,7 +93,18 @@ export class DragablePoint extends Graphics {
   }
   static onDragMove(event){
     if (DragablePoint.currentTarget){
-      DragablePoint.currentTarget.setPosition(event.data.global.x, -event.data.global.y + app.renderer.height);
+      // DragablePoint.currentTarget.setPosition(event.data.global.x, -event.data.global.y + app.renderer.height);
+      
+      // Handle zoom on mouse wheel
+      const zoomX = app.stage.scale.x;
+      const zoomY = app.stage.scale.y;
+      const mouseX = event.data.global.x;
+      const mouseY = event.data.global.y;
+
+      const newX = (mouseX - app.stage.x) / zoomX;
+      const newY = (mouseY - app.stage.y) / zoomY;
+      DragablePoint.currentTarget.setPosition(newX, newY);
+      
     }
   }
   static onDragEnd(){

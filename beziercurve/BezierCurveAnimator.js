@@ -24,7 +24,7 @@ export class BezierCurveAnimator{
     this.pointAnimationList = [];
     /** @type {Graphics} */
     this.graphics = graphics;
-    this.duration = stepDuration;
+    this.stepDuration = stepDuration;
   }
   
   /**
@@ -36,13 +36,13 @@ export class BezierCurveAnimator{
     this.graphics.clear();
     this.lineAnimationList.forEach(p => {
       p.centerPoint.sync();
-      p.progress += ticker.elapsedMS/1000/this.duration; 
+      p.progress += ticker.elapsedMS/1000/this.stepDuration; 
       this.drawLineProgress(p.centerPoint, easeOutQuart(saturate(p.progress))); // saturate to prevent overshoot
     });
 
     this.pointAnimationList.forEach(p => {
       p.centerPoint.sync();
-      p.progress += ticker.elapsedMS/1000/this.duration;
+      p.progress += ticker.elapsedMS/1000/this.stepDuration;
       this.drawPointProgress(p.centerPoint, easeOutBackCubic(saturate(p.progress)));
     });
 

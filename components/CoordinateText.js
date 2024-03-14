@@ -38,4 +38,9 @@ export class CoordinateText extends BitmapText {
   setText(x, y){
     this.text = `${this.name}(${x.toFixed(2)}, ${y.toFixed(2)})`;
   }
+
+  rename(name) {
+    this.name = name;
+    this.setText(this.x, this.y);
+  }
 }

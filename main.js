@@ -1,6 +1,6 @@
 import "./style.css"
 import { PointInput } from './components/PointInput.js'
-import { Application, Graphics, Container, Rectangle } from 'pixi.js';
+import { Application, Graphics, Container, Rectangle, Point } from 'pixi.js';
 import Data from "./config/data.json"
 import { DragablePoint } from "./components/DragablePoint.js";
 import BezierCurve from "./beziercurve/BezierCurve";
@@ -10,13 +10,19 @@ import CenterPoint from "./beziercurve/CenterPoint";
 import BezierCurveOld from "./beziercurve/BezierCurveOld";
 import { CoordinateText } from "./components/CoordinateText";
 import { BezierCurveAnimator } from "./beziercurve/BezierCurveAnimator";
+import { randomRange } from "./beziercurve/math";
+import SidebarClose from "./components/SidebarClose";
+import SidebarOpen from "./components/SidebarOpen";
+import { AlgorithmOption } from "./components/AlgorithmOption";
+
+let algorithmId = 0; // 0: divide and conquer, 1: brute force
 
 export const app = new Application();
-
-const leftMargin = Data.leftMargin; // width of the sidebar
-const canvasWidth = window.innerWidth-leftMargin;
+const rightMargin = Data.leftMargin; // width of the sidebar
+const canvasWidth = window.innerWidth-rightMargin;
 const canvasheight = window.innerHeight;
 const graphicContainer = new Container();
+
 
 /** To tell when to redraw the curve */
 let visualizationState = 0; // 0: None, 1: Normal, 2: Steps
@@ -29,6 +35,9 @@ let highestId = 0;
 
 /** @type {DragablePoint[]} List of input points */ 
 const inputPoints = [];
+
+/** @type {CoordinateText[]} List of input points */ 
+const inputCoordinateTexts = [];
 
 /** @type {Graphics} List of input lines */ 
 const inputLinesGraphic = new Graphics();
@@ -91,13 +100,13 @@ function redrawLineResult(){
  */
 function redrawStepLineResult(){
   stepsGraphic.clear();
-  stepPoints.forEach(p => {
-    p.sync();
-    drawPointStep(p);
-  });
   stepLines.forEach(p => {
     p.sync();
     drawLineStep(p);
+  });
+  stepPoints.forEach(p => {
+    p.sync();
+    drawPointStep(p);
   });
 }
 /** ================================================ Redraws ================================================ **/
@@ -131,15 +140,16 @@ function drawPointStep(p){
  * @param {number} defaultY 
  */
 function addInput(defaultX, defaultY) {
+  const name = `P${highestId}`;
 
   const dragablePoint = new DragablePoint(defaultX, defaultY);
-  const coordinateText = new CoordinateText();
-  const name = `P${highestId}`;
-  coordinateText.attachToDraggablePoint(dragablePoint, 10, 10, name);
   dragablePoint.setDragable(app);
+  const coordinateText = new CoordinateText();
+  coordinateText.attachToDraggablePoint(dragablePoint, 10, 10, name);
   
   graphicContainer.addChild(dragablePoint);
   inputPoints.push(dragablePoint);
+  inputCoordinateTexts.push(coordinateText);
   redrawInputLines();
 
   const [newInput, inputX, inputY] = PointInput(name, defaultX, defaultY, 
@@ -147,6 +157,9 @@ function addInput(defaultX, defaultY) {
       highestId--;
       graphicContainer.removeChild(dragablePoint);
       inputPoints.splice(inputPoints.indexOf(dragablePoint), 1);
+      inputCoordinateTexts.splice(inputCoordinateTexts.indexOf(coordinateText), 1);
+      // rename the point names
+      inputCoordinateTexts.forEach((el, i) => el.rename(`P${i}`));
       redrawInputLines();
 
       // update the point names
@@ -205,7 +218,7 @@ function InitializeCurves() {
   visualizationState = 0;
   graphicContainer.removeChildren();
   inputPoints.forEach(p => graphicContainer.addChild(p));
-  graphicContainer.addChild(lineResultGraphic, inputLinesGraphic, stepsGraphic, animatedStepsGraphic);
+  graphicContainer.addChild(lineResultGraphic, stepsGraphic, animatedStepsGraphic, inputLinesGraphic);
   redrawInputLines();
   lineResultGraphic.clear();
   stepPoints = [];
@@ -214,21 +227,34 @@ function InitializeCurves() {
 }
 InitializeCurves();
 
-document.getElementById('add-point').addEventListener('click', () => addInput(canvasWidth/2, canvasheight/2));
-document.getElementById('visualize-curve').addEventListener('click', visualizeCurve);
-document.getElementById('show-steps').addEventListener('click', showStepsAnimatedConcurent);
-document.getElementById('clear-curve').addEventListener('click', InitializeCurves);
-
-addInput(canvasWidth/2-350, canvasheight/2-250);
-addInput(canvasWidth/2-250, canvasheight/2+250);
-addInput(canvasWidth/2+250, canvasheight/2+250);
-addInput(canvasWidth/2+350, canvasheight/2-250);
-
-
 (async () =>
 {
-  await app.init({ background: Data.slate950, width:canvasWidth, height: canvasheight });
-  // await app.init({ background: Data.slate950, resizeTo: window });
+  // await app.init({ background: Data.slate950, width:canvasWidth, height: canvasheight });
+  await app.init({ background: Data.slate950, resizeTo: window });
+  
+  document.getElementById('add-point').addEventListener('click', () => addInput(randomRange(0, app.renderer.width-rightMargin), randomRange(0, app.renderer.height)));
+  document.getElementById('visualize-curve').addEventListener('click', visualizeCurve);
+  document.getElementById('show-steps').addEventListener('click', showStepsAnimatedConcurent);
+  document.getElementById('clear-curve').addEventListener('click', InitializeCurves);
+  document.getElementById('step-duration').addEventListener('input', (e) => {
+    stepDuration = parseFloat(e.target.value);
+    bezierCurveAnimator.stepDuration = stepDuration;
+  });
+  const rightSidebar = document.getElementById('right-sidebar');
+  const sidebarClose = document.getElementById('sidebar-close');
+  sidebarClose.addEventListener('click', (e) => SidebarClose(sidebarClose, rightSidebar));
+  document.getElementById('sidebar-open').addEventListener('click', (e) => SidebarOpen(sidebarClose, rightSidebar));
+  const algorithmOptions = [document.getElementById('divide-and-conquer'), document.getElementById('brute-force')];
+  algorithmOptions.forEach((el, i) => el.addEventListener('click', () => {
+    console.log('algorithmId', i);
+    AlgorithmOption(algorithmOptions, i);
+  }));
+
+  addInput(app.renderer.width*0.3, app.renderer.height*0.2);
+  addInput(app.renderer.width*0.4, app.renderer.height*0.7);
+  addInput(app.renderer.width*0.6, app.renderer.height*0.7);
+  addInput(app.renderer.width*0.7, app.renderer.height*0.2);
+
   app.stage.position.y = app.renderer.height / app.renderer.resolution;
   app.stage.scale.y = -1;
 
@@ -239,6 +265,16 @@ addInput(canvasWidth/2+350, canvasheight/2-250);
   app.stage.hitArea = app.screen;
   app.stage.on('pointerup', DragablePoint.onDragEnd);
   app.stage.on('pointerupoutside', DragablePoint.onDragEnd);
+
+  // zoom stage by wheel
+  addEventListener('wheel' , (e) => {
+    const mousePos = new Point(e.clientX, e.clientY);
+    const zoom = e.deltaY > 0 ? 0.9 : 1.1;
+    app.stage.scale.x *= zoom;
+    app.stage.scale.y *= zoom;
+    app.stage.position.x = mousePos.x - (mousePos.x - app.stage.position.x) * zoom;
+    app.stage.position.y = mousePos.y - (mousePos.y - app.stage.position.y) * zoom;
+  });
 
   // To make the canvas full screen
   app.canvas.style.position = 'fixed';
