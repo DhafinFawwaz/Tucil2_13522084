@@ -17,44 +17,59 @@
     <div id="sidebar-close" class="fixed inset-0 z-30 bg-transparent block lg:hidden"></div>
 
     <!-- Top Right Sidebar Toggle Button -->
-    <button id="sidebar-open" class="p-3 m-2 fixed z-30 top-0 right-0 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 rounded-lg font-bold">
+    <button id="right-sidebar-open" class="p-3 m-2 fixed z-30 top-0 right-0 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 rounded-lg font-bold">
+      <svg class="self-center" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 8 8"><path fill="currentColor" d="M0 1v1h8V1zm0 2.97v1h8v-1zm0 3v1h8v-1z"/></svg>
+    </button>
+
+    <!-- Bottom Left Sidebar Toggle Button -->
+    <button id="left-sidebar-open" class="p-3 m-2 fixed z-30 bottom-0 left-0 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 rounded-lg font-bold">
       <svg class="self-center" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 8 8"><path fill="currentColor" d="M0 1v1h8V1zm0 2.97v1h8v-1zm0 3v1h8v-1z"/></svg>
     </button>
 
 
     <!-- Right Sidebar -->
-    <aside id="right-sidebar" class="fixed right-0 w-64 h-screen z-40 bg-slate-900 flex flex-col gap-2 overflow-y-scroll mb-4">
+    <aside id="right-sidebar" class="fixed right-0 w-64 h-screen z-40 bg-slate-900 flex flex-col gap-2 overflow-y-scroll mb-4 ring-1 ring-slate-800 ring-inset">
       <div class="w-full flex flex-col gap-2">
         <h1 class="font-extrabold text-3xl mx-4 mt-4">Bezier Curve</h1>
         <h2 class="font-bold text-md mx-4">Iterations</h2>
-        <input value="3" id="iterations" type="number" class="bg-slate-800 duration-100 px-2 mx-4 py-1 text-slate-50 rounded-lg shadow-sm outline-none ring-2 ring-inset ring-transparent focus:ring-indigo-500">
+        <input value="3" id="iterations" type="number" class="bg-slate-800 duration-100 px-2 mx-4 py-1 text-slate-50 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 ring-1 ring-slate-700 ring-inset">
         <h2 class="font-bold text-md mx-4">Points</h2>
         <div id="point-input-list" class="flex flex-col gap-2 w-full"></div>
-        <button id="add-point" class="mx-4 mb-4 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 px-3 rounded-lg font-bold">+</button>
+        <button id="add-point" class="mx-4 mb-4 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 px-3 py-0.5 rounded-lg font-bold ring-1 ring-slate-700 ring-inset">+</button>
       </div>
     </aside>
     
     <!-- Bottom Left Button -->
-    <aside class="fixed p-4 bg-slate-900 z-40 left-0 bottom-0 flex flex-col gap-2 rounded-tr-xl w-56">
-      <div id="time-taken" class="font-semibold text-sm">Time taken: -</div>
+    <aside id="left-sidebar" class="fixed p-4 bg-slate-900 z-40 left-0 bottom-0 flex flex-col gap-2 rounded-tr-xl w-56">
 
       <!-- Brute Force, Divide & Conquer -->
+      <div class="font-semibold text-sm whitespace-nowrap">Algorithm: </div>
       <div class="flex flex-col">
-        <button disabled id="divide-and-conquer" class="disabled:bg-rose-600 disabled:text-slate-50 hover:bg-slate-50 hover:text-slate-900 bg-slate-800 duration-100 px-3 py-1 font-bold rounded-t-xl">Divide & Conquer</button>
+        <button disabled id="divide-and-conquer" class="disabled:bg-green-600 disabled:text-slate-50 hover:bg-slate-50 hover:text-slate-900 bg-slate-800 duration-100 px-3 py-1 font-bold rounded-t-xl">Divide & Conquer</button>
         <button id="brute-force" class="disabled:bg-rose-600 disabled:text-slate-50 hover:bg-slate-50 hover:text-slate-900 bg-slate-800 duration-100 px-3 py-1 font-bold rounded-b-xl">Brute Force</button>
       </div>
+
+      <hr class="h-px bg-slate-800 border-0">
       
       <!-- Visualize Curve, Clear Curve -->
+      <div id="time-taken" class="font-semibold text-sm">Time taken: -</div>
       <div class="flex gap-2">
         <button id="visualize-curve" class="bg-indigo-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 px-3 py-1 rounded-xl font-bold w-full">Visualize Curve</button>
-        <button id="clear-curve" class="bg-slate-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 w-12 flex justify-center rounded-xl font-bold">
+        <button id="clear-curve" class="bg-slate-600 text-slate-50 hover:bg-slate-50 hover:text-slate-900 duration-100 w-11 flex justify-center rounded-xl font-bold">
           <svg class="self-center" xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 48 48"><g fill="none" stroke="currentColor"><path fill="currentColor" stroke-linejoin="round" stroke-width="4.3" d="M44.782 24.17L31.918 7.1L14.135 20.5L27.5 37l3.356-2.336z"/><path stroke-linejoin="round" stroke-width="4.3" d="m27.5 37l-3.839 3.075l-10.563-.001l-2.6-3.45l-6.433-8.536L14.5 20.225"/><path stroke-linecap="round" stroke-width="4.5" d="M13.206 40.072h31.36"/></g></svg>
         </button>
       </div>
 
-      <div class="flex gap-2">
+      <hr class="h-px bg-slate-800 border-0">
+
+      <div class="flex gap-2 justify-between">
         <div class="font-semibold text-sm self-center whitespace-nowrap">Step Duration: </div>
-        <input size="1" step="0.05" type="number" id="step-duration" class="bg-slate-800 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none ring-2 ring-transparent focus:ring-indigo-500 ring-inset min-w-0" value="0.5">
+        <input size="1" step="0.05" type="number" id="step-duration" class="bg-slate-800 w-20 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none focus:ring-2 ring-transparent focus:ring-indigo-500 min-w-0 ring-1 ring-slate-700 ring-inset" value="0.4">
+      </div>
+      
+      <div class="flex gap-2 justify-between">
+        <div class="font-semibold text-sm self-center whitespace-nowrap">Step Delay: </div>
+        <input size="1" step="0.05" type="number" id="step-delay" class="bg-slate-800 w-20 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none focus:ring-2 ring-transparent focus:ring-indigo-500 min-w-0 ring-1 ring-slate-700 ring-inset" value="0.15">
       </div>
 
 

@@ -6,14 +6,14 @@ import { DragablePoint } from "./components/DragablePoint.js";
 import BezierCurve from "./beziercurve/BezierCurve";
 import setTimeTaken from "./components/TimeTaken";
 import getIteration from "./components/IterationInput";
-import CenterPoint from "./beziercurve/CenterPoint";
+import SyncablePoint from "./beziercurve/SyncablePoint";
 import BezierCurveOld from "./beziercurve/BezierCurveOld";
 import { CoordinateText } from "./components/CoordinateText";
 import { BezierCurveAnimator } from "./beziercurve/BezierCurveAnimator";
 import { randomRange } from "./beziercurve/math";
-import SidebarClose from "./components/SidebarClose";
-import SidebarOpen from "./components/SidebarOpen";
+import { SidebarOpen, SidebarClose } from "./components/Sidebar";
 import { AlgorithmOption } from "./components/AlgorithmOption";
+import BackgroundGraphic from "./components/BackgroundGraphic";
 
 let algorithmId = 0; // 0: divide and conquer, 1: brute force
 
@@ -54,16 +54,17 @@ const stepsGraphic = new Graphics();
 stepsGraphic.interactive = false;
 stepsGraphic.hitArea = new Rectangle(0,0,0,0)
 
-/** @type {DragablePoint[]} List of step points */ 
+/** @type {SyncablePoint[]} List of step points */ 
 let stepPoints = [];
 
-/** @type {DragablePoint[]} List of step lines */ 
+/** @type {SyncablePoint[]} List of step lines */ 
 let stepLines = [];
 
 /** ====================================================================== **/
 
 /** @type {number} The duration of each step in seconds */
 let stepDuration = 0.5;
+let stepDelay = 0.15;
 
 /** @type {BezierCurve} The curve itself */ 
 const bezierCurve = new BezierCurve();
@@ -73,6 +74,12 @@ const animatedStepsGraphic = new Graphics();
 
 /** @type {BezierCurveAnimator} The curve animator */
 const bezierCurveAnimator = new BezierCurveAnimator(animatedStepsGraphic, stepDuration);
+
+/** ====================================================================== **/
+
+
+/** @type {BackgroundGraphic} animated steps graphics */ 
+let backgroundGraphic;
 
 /** ================================================ Redraws ================================================ **/
 /** sync the lines with the points */
@@ -116,7 +123,7 @@ function redrawStepLineResult(){
 /** ================================================ Draw Animated Steps ================================================ **/
 /**
  * Redraw animated line results
- * @param {CenterPoint} p The point to draw
+ * @param {SyncablePoint} p The point to draw
  */
 function drawLineStep(p){
   stepsGraphic.moveTo(p.point1.x, p.point1.y).lineTo(p.point2.x, p.point2.y)
@@ -124,7 +131,7 @@ function drawLineStep(p){
 }
 /**
  * Redraw animated line results
- * @param {CenterPoint} p The point that connected to 2 other points to draw
+ * @param {SyncablePoint} p The point that connected to 2 other points to draw
  */
 function drawPointStep(p){
   stepsGraphic.circle(p.x, p.y, Data.pointRadius).fill(Data.slate50).circle(p.x, p.y, Data.pointRadius*0.80).fill(Data.slate950).circle(p.x, p.y, Data.pointRadius*0.40).fill(Data.slate50);
@@ -185,17 +192,24 @@ function addInput(defaultX, defaultY) {
 }
 
 function visualizeCurve() {
+  if(inputPoints.length < 3) return alert("Please add at least 3 points");
+
   if(visualizationState !== 0) InitializeCurves(); 
   visualizationState = 1;
   const p = inputPoints; // shorthand
   const iterations = getIteration();
   bezierCurve.clear();
   const startTime = performance.now();
-  bezierCurve.generate(p, iterations);
+  if(algorithmId === 0)
+    bezierCurve.generateByDivideAndConquer(p, iterations);
+  else
+    bezierCurve.generateByBruteForce(p, iterations);
   setTimeTaken((performance.now() - startTime).toFixed(2));
   redrawLineResult();
 }
 async function showStepsAnimatedConcurent() {
+  if(inputPoints.length < 3) return alert("Please add at least 3 points");
+
   if(visualizationState !== 0) InitializeCurves(); 
   const p = inputPoints;
   const iterations = getIteration();
@@ -203,11 +217,18 @@ async function showStepsAnimatedConcurent() {
   stepPoints = [];
   stepLines = [];
   visualizationState = 2;
-  await bezierCurve.generateWithSteps(p, iterations, stepDuration*200, p => {
-    bezierCurveAnimator.animatePointStep(p, () => stepPoints.push(p));
-  }, p => {
-    bezierCurveAnimator.animateLineStep(p, () => stepLines.push(p));
-  });
+  if(algorithmId === 0)
+    await bezierCurve.generateWithStepsByDivideAndConquer(p, iterations, stepDelay*1000, p => {
+      bezierCurveAnimator.animatePointStep(p, () => stepPoints.push(p));
+    }, p => {
+      bezierCurveAnimator.animateLineStep(p, () => stepLines.push(p));
+    });
+  else
+    await bezierCurve.generateWithStepsByBruteForce(p, iterations, stepDelay*1000, p => {
+      bezierCurveAnimator.animatePointStep(p, () => stepPoints.push(p));
+    }, p => {
+      bezierCurveAnimator.animateLineStep(p, () => stepLines.push(p));
+    });
 }
 /** ================================================ GUI Function End ================================================ **/
 
@@ -217,20 +238,22 @@ async function showStepsAnimatedConcurent() {
 function InitializeCurves() {
   visualizationState = 0;
   graphicContainer.removeChildren();
+  graphicContainer.addChild(backgroundGraphic, lineResultGraphic, stepsGraphic, animatedStepsGraphic, inputLinesGraphic);
   inputPoints.forEach(p => graphicContainer.addChild(p));
-  graphicContainer.addChild(lineResultGraphic, stepsGraphic, animatedStepsGraphic, inputLinesGraphic);
   redrawInputLines();
   lineResultGraphic.clear();
   stepPoints = [];
   stepLines = [];
   stepsGraphic.clear();
+  bezierCurve.clear();
 }
-InitializeCurves();
 
 (async () =>
 {
   // await app.init({ background: Data.slate950, width:canvasWidth, height: canvasheight });
-  await app.init({ background: Data.slate950, resizeTo: window });
+  await app.init({ background: Data.slate950, resizeTo: window, antialias: true});
+  backgroundGraphic = new BackgroundGraphic(app);
+  InitializeCurves();
   
   document.getElementById('add-point').addEventListener('click', () => addInput(randomRange(0, app.renderer.width-rightMargin), randomRange(0, app.renderer.height)));
   document.getElementById('visualize-curve').addEventListener('click', visualizeCurve);
@@ -240,13 +263,21 @@ InitializeCurves();
     stepDuration = parseFloat(e.target.value);
     bezierCurveAnimator.stepDuration = stepDuration;
   });
+  document.getElementById('step-delay').addEventListener('input', (e) => {
+    stepDelay = parseFloat(e.target.value);
+  });
   const rightSidebar = document.getElementById('right-sidebar');
+  const leftSidebar = document.getElementById('left-sidebar');
   const sidebarClose = document.getElementById('sidebar-close');
-  sidebarClose.addEventListener('click', (e) => SidebarClose(sidebarClose, rightSidebar));
-  document.getElementById('sidebar-open').addEventListener('click', (e) => SidebarOpen(sidebarClose, rightSidebar));
+  sidebarClose.addEventListener('click', (e) => {
+    SidebarClose(sidebarClose, rightSidebar);
+    SidebarClose(sidebarClose, leftSidebar);
+  });
+  document.getElementById('right-sidebar-open').addEventListener('click', (e) => SidebarOpen(sidebarClose, rightSidebar));
+  document.getElementById('left-sidebar-open').addEventListener('click', (e) => SidebarOpen(sidebarClose, leftSidebar));
   const algorithmOptions = [document.getElementById('divide-and-conquer'), document.getElementById('brute-force')];
   algorithmOptions.forEach((el, i) => el.addEventListener('click', () => {
-    console.log('algorithmId', i);
+    algorithmId = i;
     AlgorithmOption(algorithmOptions, i);
   }));
 

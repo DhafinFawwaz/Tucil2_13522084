@@ -12,11 +12,11 @@ export function PointInput(name, defaultX, defaultY, onRemove, onChange) {
 <div class="flex gap-2 mx-4">
   <div id="point-name" class="w-4 text-center text-sm rounded-lg self-center mr-1">${name}</div>
   
-  <input step=50 type="number" class="bg-slate-800 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none ring-2 ring-transparent focus:ring-indigo-500 ring-inset grow w-16" value=${defaultX}>
+  <input step=50 type="tel" class="bg-slate-800 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 ring-1 ring-slate-700 ring-inset grow w-16" value=${defaultX}>
 
-  <input step=50 type="number" class="bg-slate-800 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none ring-2 ring-transparent focus:ring-indigo-500 ring-inset grow w-16"value=${defaultY}>
+  <input step=50 type="tel" class="bg-slate-800 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 ring-1 ring-slate-700 ring-inset grow w-16" value=${defaultY}>
 
-  <button class="w-8 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 rounded-lg font-bold">-</button>
+  <button class="w-8 bg-slate-800 text-slate-50 hover:bg-slate-700 border border-transparent hover:border-slate-500 duration-100 rounded-lg font-bold ring-1 ring-slate-700 ring-inset">-</button>
 </div>
 `
   const button = template.content.querySelector('button')
