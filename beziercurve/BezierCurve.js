@@ -5,12 +5,15 @@ import Colors from "../config/color.json";
 import Data from "../config/data.json";
 import CenterPoint from "./CenterPoint";
 import LerpPoint from "./LerpPoint";
+import SyncablePoint from "./SyncablePoint";
 
 export default class BezierCurve{
 
   constructor() {
-    this.centerPointResult = [];
-    this.centerPointWaste = [];
+    /** @type {SyncablePoint[]} */
+    this.syncablePointResult = [];
+    /** @type {SyncablePoint[]} */
+    this.syncablePointWaste = [];
   }
   
   /**
@@ -18,8 +21,8 @@ export default class BezierCurve{
    * @param {RefreshCallback} onRefresh 
    */
   refresh(onRefresh) {
-    this.centerPointWaste.forEach(p => p.sync());
-    this.centerPointResult.forEach(p => {
+    this.syncablePointWaste.forEach(p => p.sync());
+    this.syncablePointResult.forEach(p => {
       p.sync();
       onRefresh(p);
     });
@@ -27,8 +30,8 @@ export default class BezierCurve{
 
   /** Clear all generated points */
   clear() {
-    this.centerPointResult = [];
-    this.centerPointWaste = [];
+    this.syncablePointResult = [];
+    this.syncablePointWaste = [];
   }
   /**
    * Usage: await this.wait(1000); // wait for 1 second
@@ -88,7 +91,7 @@ export default class BezierCurve{
   generateByDivideAndConquer(p, iterations) {
     /** @type {[CenterPoint[], CenterPoint[], CenterPoint[]]} */
     const [left, right, centerFlatList] = this.generateLeftRight(p);
-    this.centerPointWaste.push(...centerFlatList);
+    this.syncablePointWaste.push(...centerFlatList);
 
     const length = p.length;
 
@@ -102,7 +105,7 @@ export default class BezierCurve{
       /** @type {CenterPoint} */
       const l2 = new CenterPoint(left[length-1], right[0]);
 
-      this.centerPointResult.push(l1, l2);
+      this.syncablePointResult.push(l1, l2);
     }
   }
 
@@ -170,7 +173,7 @@ export default class BezierCurve{
       for(let i = 0; i < length-1; i++) {
         const centerPoint = new LerpPoint(p[i], p[i+1], progress);
         lerpPointsList.push(centerPoint);
-        this.centerPointWaste.push(centerPoint);
+        this.syncablePointWaste.push(centerPoint);
       }
 
       // sub sub sub... center points
@@ -179,7 +182,7 @@ export default class BezierCurve{
         for(let j = 0; j < length-i; j++) {
           const centerPoint = new LerpPoint(lerpPointsList[count+j], lerpPointsList[count+j+1], progress);
           lerpPointsList.push(centerPoint);
-          this.centerPointWaste.push(centerPoint);
+          this.syncablePointWaste.push(centerPoint);
         }
         count += length - i + 1;
       }
@@ -188,13 +191,13 @@ export default class BezierCurve{
     } // k
 
     const leftMostLine = new CenterPoint(p[0], resultPoints[0]);
-    this.centerPointResult.push(leftMostLine);
+    this.syncablePointResult.push(leftMostLine);
     for(let i = 0; i < resultPoints.length-1; i++) {
       const centerPoint = new CenterPoint(resultPoints[i], resultPoints[i+1]);
-      this.centerPointResult.push(centerPoint);
+      this.syncablePointResult.push(centerPoint);
     }
     const rightMostLine = new CenterPoint(resultPoints[resultPoints.length-1], p[length-1]);
-    this.centerPointResult.push(rightMostLine);
+    this.syncablePointResult.push(rightMostLine);
   }
 
 
@@ -292,15 +295,15 @@ export default class BezierCurve{
     const q0 = new CenterPoint(p[0], p[1]); // non output
     const q1 = new CenterPoint(p[1], p[2]); // non output
     const r0 = new CenterPoint(q0, q1); // non output
-    this.centerPointWaste.push(q0, q1, r0);
+    this.syncablePointWaste.push(q0, q1, r0);
 
     if(iterations > 1) {
-      this.generateQuadratic([p[0], q0, r0], iterations - 1, this.centerPointResult, this.centerPointWaste);
-      this.generateQuadratic([r0, q1, p[2]], iterations - 1, this.centerPointResult, this.centerPointWaste);
+      this.generateQuadratic([p[0], q0, r0], iterations - 1, this.syncablePointResult, this.syncablePointWaste);
+      this.generateQuadratic([r0, q1, p[2]], iterations - 1, this.syncablePointResult, this.syncablePointWaste);
     } else {
       const p0r0 = new CenterPoint(p[0], r0); // output
       const r0p2 = new CenterPoint(r0, p[2]); // output
-      this.centerPointResult.push(p0r0, r0p2);
+      this.syncablePointResult.push(p0r0, r0p2);
     }
   }
 

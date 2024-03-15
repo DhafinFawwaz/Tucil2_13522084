@@ -1,6 +1,6 @@
 import "./style.css"
 import { PointInput } from './components/PointInput.js'
-import { Application, Graphics, Container, Rectangle, Point } from 'pixi.js';
+import { Application, Graphics, Container, Rectangle, Point, Text } from 'pixi.js';
 import Data from "./config/data.json"
 import { DragablePoint } from "./components/DragablePoint.js";
 import BezierCurve from "./beziercurve/BezierCurve";
@@ -17,12 +17,11 @@ import BackgroundGraphic from "./components/BackgroundGraphic";
 
 let algorithmId = 0; // 0: divide and conquer, 1: brute force
 
-export const app = new Application();
+export const app = new Application(); // Imported by DraggablePoint for dragging points
 const rightMargin = Data.leftMargin; // width of the sidebar
-const canvasWidth = window.innerWidth-rightMargin;
-const canvasheight = window.innerHeight;
-const graphicContainer = new Container();
 
+/** @type {Container} Container for graphics */ 
+const graphicContainer = new Container();
 
 /** To tell when to redraw the curve */
 let visualizationState = 0; // 0: None, 1: Normal, 2: Steps
@@ -42,7 +41,7 @@ const inputCoordinateTexts = [];
 /** @type {Graphics} List of input lines */ 
 const inputLinesGraphic = new Graphics();
 
-/** @type {Graphics} Line result graphics */ 
+/** @type {Graphics} Graphic that draws the input lines */ 
 const lineResultGraphic = new Graphics();
 lineResultGraphic.interactive = false;
 lineResultGraphic.hitArea = new Rectangle(0,0,0,0)
@@ -81,6 +80,13 @@ const bezierCurveAnimator = new BezierCurveAnimator(animatedStepsGraphic, stepDu
 /** @type {BackgroundGraphic} animated steps graphics */ 
 let backgroundGraphic;
 
+/** ====================================================================== **/
+
+let dynamicUpdate = true;
+let showResultCoordinate = true;
+let showInputLines = true;
+let canZoom = true;
+
 /** ================================================ Redraws ================================================ **/
 /** sync the lines with the points */
 function redrawInputLines() {
@@ -91,20 +97,52 @@ function redrawInputLines() {
   }
 }
 
-/**
- * Redraw line results
- */
+/** Redraw line results*/
+/** @type {CoordinateText[]} */
+const resultCoordinateTexts = [];
 function redrawLineResult(){
   lineResultGraphic.clear();
   bezierCurve.refresh(p => {
     lineResultGraphic.moveTo(p.point1.x, p.point1.y).lineTo(p.point2.x, p.point2.y)
       .fill(Data.slate50).stroke({ width: Data.lineWidth, color: Data.slate50 });
   });
+
+  // Handle the result coordinate checkbox
+  if(showResultCoordinate && resultCoordinateTexts.length !== bezierCurve.syncablePointResult.length-1) {
+    while(resultCoordinateTexts.length < bezierCurve.syncablePointResult.length-1) {
+      const coordinateText = new CoordinateText();
+      const circleGraphic = new Graphics(DragablePoint.graphicContext);
+      circleGraphic.x = -Data.coordinateTextOffset;
+      circleGraphic.y = -Data.coordinateTextOffset;
+      coordinateText.addChild(circleGraphic);
+      resultCoordinateTexts.push(coordinateText);
+      graphicContainer.addChild(coordinateText);
+    }
+    while(resultCoordinateTexts.length > bezierCurve.syncablePointResult.length-1) {
+      const p = resultCoordinateTexts.pop();
+      graphicContainer.removeChild(p);
+    }
+    // Rename
+    resultCoordinateTexts.forEach((el, i) => el.rename(`Q${i}`));
+
+  }
+  
+  if(!showResultCoordinate && resultCoordinateTexts.length > 0) {
+    resultCoordinateTexts.forEach(p => graphicContainer.removeChild(p));
+    resultCoordinateTexts.length = 0;    
+  }
+  
+  if(showResultCoordinate  && resultCoordinateTexts.length === bezierCurve.syncablePointResult.length-1) {
+    for(let i = 0; i < resultCoordinateTexts.length; i++) { 
+      const p = bezierCurve.syncablePointResult[i];
+      resultCoordinateTexts[i].x = p.point2.x + Data.coordinateTextOffset;
+      resultCoordinateTexts[i].y = p.point2.y - Data.coordinateTextOffset;
+      resultCoordinateTexts[i].setText(p.point2.x, p.point2.y);
+    }
+  }
 }
 
-/**
- * Redraw step line results
- */
+/** Redraw step line results */
 function redrawStepLineResult(){
   stepsGraphic.clear();
   stepLines.forEach(p => {
@@ -142,7 +180,7 @@ function drawPointStep(p){
 
 /** ================================================ GUI Function ================================================ **/
 /**
- * Add a new point input and dragable points
+ * Add a new point input in GUI and dragable points in Canvas
  * @param {number} defaultX 
  * @param {number} defaultY 
  */
@@ -152,7 +190,7 @@ function addInput(defaultX, defaultY) {
   const dragablePoint = new DragablePoint(defaultX, defaultY);
   dragablePoint.setDragable(app);
   const coordinateText = new CoordinateText();
-  coordinateText.attachToDraggablePoint(dragablePoint, 10, 10, name);
+  coordinateText.attachToDraggablePoint(dragablePoint, Data.coordinateTextOffset, Data.coordinateTextOffset, name);
   
   graphicContainer.addChild(dragablePoint);
   inputPoints.push(dragablePoint);
@@ -191,6 +229,7 @@ function addInput(defaultX, defaultY) {
   inputListParent.appendChild(newInput.content)
 }
 
+/** Solve the Bezier Curve and draw to Canvas */
 function visualizeCurve() {
   if(inputPoints.length < 3) return alert("Please add at least 3 points");
 
@@ -207,7 +246,9 @@ function visualizeCurve() {
   setTimeTaken((performance.now() - startTime).toFixed(2));
   redrawLineResult();
 }
-async function showStepsAnimatedConcurent() {
+
+/** Solve the Bezier Curve and draw with step by step animation */
+async function showStepsAnimated() {
   if(inputPoints.length < 3) return alert("Please add at least 3 points");
 
   if(visualizationState !== 0) InitializeCurves(); 
@@ -232,9 +273,25 @@ async function showStepsAnimatedConcurent() {
 }
 /** ================================================ GUI Function End ================================================ **/
 
+/** ================================================ GUI Checkbox ================================================ **/
+function toggleResultCoordinate(e) {
+  showResultCoordinate = e.target.checked;
+}
+function toggleInputLines(e) {
+  showInputLines = e.target.checked;
+  inputLinesGraphic.visible = showInputLines;
+}
+function toggleZoomScrollWheel(e) {
+  canZoom = e.target.checked;
+}
+function toggleDynamicUpdate(e) {
+  dynamicUpdate = e.target.checked;
+}
+/** ================================================ GUI Checkbox End ================================================ **/
 
 
 /** ================================================ Initialization ================================================ **/
+/** Clear all curves */
 function InitializeCurves() {
   visualizationState = 0;
   graphicContainer.removeChildren();
@@ -246,8 +303,10 @@ function InitializeCurves() {
   stepLines = [];
   stepsGraphic.clear();
   bezierCurve.clear();
+  resultCoordinateTexts.length = 0;    
 }
 
+/** Initialize canvas and connect GUI with inputs */
 (async () =>
 {
   // await app.init({ background: Data.slate950, width:canvasWidth, height: canvasheight });
@@ -257,7 +316,7 @@ function InitializeCurves() {
   
   document.getElementById('add-point').addEventListener('click', () => addInput(randomRange(0, app.renderer.width-rightMargin), randomRange(0, app.renderer.height)));
   document.getElementById('visualize-curve').addEventListener('click', visualizeCurve);
-  document.getElementById('show-steps').addEventListener('click', showStepsAnimatedConcurent);
+  document.getElementById('show-steps').addEventListener('click', showStepsAnimated);
   document.getElementById('clear-curve').addEventListener('click', InitializeCurves);
   document.getElementById('step-duration').addEventListener('input', (e) => {
     stepDuration = parseFloat(e.target.value);
@@ -280,6 +339,10 @@ function InitializeCurves() {
     algorithmId = i;
     AlgorithmOption(algorithmOptions, i);
   }));
+  document.getElementById('dynamic-update').addEventListener('change', toggleDynamicUpdate);
+  document.getElementById('result-coordinate').addEventListener('change', toggleResultCoordinate);
+  document.getElementById('input-lines').addEventListener('change', toggleInputLines);
+  document.getElementById('zoom-scroll-wheel').addEventListener('change', toggleZoomScrollWheel);
 
   addInput(app.renderer.width*0.3, app.renderer.height*0.2);
   addInput(app.renderer.width*0.4, app.renderer.height*0.7);
@@ -299,6 +362,7 @@ function InitializeCurves() {
 
   // zoom stage by wheel
   addEventListener('wheel' , (e) => {
+    if(!canZoom) return;
     const mousePos = new Point(e.clientX, e.clientY);
     const zoom = e.deltaY > 0 ? 0.9 : 1.1;
     app.stage.scale.x *= zoom;
@@ -313,14 +377,17 @@ function InitializeCurves() {
   app.canvas.style.left = 0;
   app.canvas.style.height = '100%';
   document.body.appendChild(app.canvas);
+  bezierCurveAnimator.removeAnimationWhenFinished = false;
 
   // Using this loop is faster than subscribing to mouse move event
   app.ticker.add((ticker) => {
+    bezierCurveAnimator.update(ticker);
+    if(!dynamicUpdate) return;
+
     redrawInputLines();
     if(visualizationState === 1) redrawLineResult();
     else if(visualizationState === 2) redrawStepLineResult();
 
-    bezierCurveAnimator.update(ticker);
   });
 
 })();

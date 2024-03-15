@@ -1,15 +1,15 @@
 import { Graphics, Ticker } from "pixi.js";
 import { lerp, easeOutQuart, saturate, easeOutBackCubic } from "./math";
-import CenterPoint from "./CenterPoint";
 import Data from "../config/data.json";
+import SyncablePoint from "./SyncablePoint";
 
 class animatable {
   /**
-   * @param {CenterPoint} centerPoint
+   * @param {SyncablePoint} syncablePoint
    * @param {OnAnimationFinishedCallback} onFinished usefull callback after animation finished
    */
-  constructor(centerPoint, onFinished) {
-    this.centerPoint = centerPoint;
+  constructor(syncablePoint, onFinished) {
+    this.syncablePoint = syncablePoint;
     this.progress = 0; // 0-1, 0: start, 1: completed
     this.onFinished = onFinished;
   }
@@ -25,6 +25,8 @@ export class BezierCurveAnimator{
     /** @type {Graphics} */
     this.graphics = graphics;
     this.stepDuration = stepDuration;
+
+    this.removeAnimationWhenFinished = true;
   }
   
   /**
@@ -32,21 +34,31 @@ export class BezierCurveAnimator{
    * @param {Ticker} ticker
    */
   update(ticker) {
-    // Continue animation
     this.graphics.clear();
+    this.continueAnimation(ticker);
+    if(this.removeAnimationWhenFinished)
+      this.removeFinishedAnimation();    
+  }
+
+  /** Continue Animation 
+   * @param {Ticker} ticker 
+  */
+  continueAnimation(ticker) {
     this.lineAnimationList.forEach(p => {
-      p.centerPoint.sync();
+      p.syncablePoint.sync();
       p.progress += ticker.elapsedMS/1000/this.stepDuration; 
-      this.drawLineProgress(p.centerPoint, easeOutQuart(saturate(p.progress))); // saturate to prevent overshoot
+      this.drawLineProgress(p.syncablePoint, easeOutQuart(saturate(p.progress))); // saturate to prevent overshoot
     });
 
     this.pointAnimationList.forEach(p => {
-      p.centerPoint.sync();
+      p.syncablePoint.sync();
       p.progress += ticker.elapsedMS/1000/this.stepDuration;
-      this.drawPointProgress(p.centerPoint, easeOutBackCubic(saturate(p.progress)));
+      this.drawPointProgress(p.syncablePoint, easeOutBackCubic(saturate(p.progress)));
     });
+  }
 
-    // Remove finished animation
+  /** Remove Finished Animation */
+  removeFinishedAnimation() {
     this.lineAnimationList = this.lineAnimationList.filter(p => {
       if(p.progress < 1) return true;
       p.onFinished();
@@ -89,7 +101,7 @@ export class BezierCurveAnimator{
 
   /**
    * Redraw animated line results
-   * @param {CenterPoint} p The point to draw
+   * @param {SyncablePoint} p The point to draw
    * @param {OnAnimationFinishedCallback} onFinished usefull callback after animation finished
    */
   animateLineStep(p, onFinished){
@@ -97,7 +109,7 @@ export class BezierCurveAnimator{
   }
   /**
    * Redraw animated line results
-   * @param {CenterPoint} p The point that connected to 2 other points to draw
+   * @param {SyncablePoint} p The point that connected to 2 other points to draw
    * @param {OnAnimationFinishedCallback} onFinished usefull callback after animation finished
    */
   animatePointStep(p, onFinished){

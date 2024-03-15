@@ -39,14 +39,41 @@
       </div>
     </aside>
     
-    <!-- Bottom Left Button -->
-    <aside id="left-sidebar" class="fixed p-4 bg-slate-900 z-40 left-0 bottom-0 flex flex-col gap-2 rounded-tr-xl w-56">
+    <!-- Bottom Left Sidebar -->
+    <aside id="left-sidebar" class="fixed p-4 bg-slate-900 z-40 left-0 bottom-0 flex flex-col gap-2 rounded-tr-xl w-56 ring-1 ring-slate-800 ring-inset">
+
+      <!-- Configuration -->
+      <div class="flex flex-col items-start gap-1">
+        <div class="font-semibold text-sm whitespace-nowrap">Configuration: </div>
+        
+        <div class="flex items-center">
+          <input checked id="dynamic-update" type="checkbox" value="" class="w-4 h-4 check bg-slate-700 checked:accent-indigo-600 text-slate-600">
+          <label for="dynamic-update" class="ms-2 text-sm font-medium text-slate-50">Dynamic Update</label>
+        </div>
+        
+        <div class="flex items-center">
+          <input checked id="result-coordinate" type="checkbox" value="true" class="w-4 h-4 check bg-slate-700 checked:accent-indigo-600 text-slate-600">
+          <label for="result-coordinate" class="ms-2 text-sm font-medium text-slate-50">Result Coordinate</label>
+        </div>
+        
+        <div class="flex items-center">
+          <input checked id="input-lines" type="checkbox" value="" class="w-4 h-4 check bg-slate-700 checked:accent-indigo-600 text-slate-600">
+          <label for="input-lines" class="ms-2 text-sm font-medium text-slate-50">Input Lines</label>
+        </div>
+        
+        <div class="flex items-center">
+          <input checked id="zoom-scroll-wheel" type="checkbox" value="" class="w-4 h-4 check bg-slate-700 checked:accent-indigo-600 text-slate-600">
+          <label for="zoom-scroll-wheel" class="ms-2 text-sm font-medium text-slate-50">Zoom Scroll Wheel</label>
+        </div>
+        
+      </div>
+      <hr class="h-px bg-slate-800 border-0">
 
       <!-- Brute Force, Divide & Conquer -->
       <div class="font-semibold text-sm whitespace-nowrap">Algorithm: </div>
       <div class="flex flex-col">
-        <button disabled id="divide-and-conquer" class="disabled:bg-green-600 disabled:text-slate-50 hover:bg-slate-50 hover:text-slate-900 bg-slate-800 duration-100 px-3 py-1 font-bold rounded-t-xl">Divide & Conquer</button>
-        <button id="brute-force" class="disabled:bg-rose-600 disabled:text-slate-50 hover:bg-slate-50 hover:text-slate-900 bg-slate-800 duration-100 px-3 py-1 font-bold rounded-b-xl">Brute Force</button>
+        <button disabled id="divide-and-conquer" class="disabled:bg-green-600 disabled:text-slate-50 hover:bg-slate-50 hover:text-slate-900 bg-slate-800 duration-100 px-3 py-1 font-bold rounded-t-xl ring-1 ring-slate-700 ring-inset disabled:ring-transparent">Divide & Conquer</button>
+        <button id="brute-force" class="disabled:bg-rose-600 disabled:text-slate-50 hover:bg-slate-50 hover:text-slate-900 bg-slate-800 duration-100 px-3 py-1 font-bold rounded-b-xl ring-1 ring-slate-700 ring-inset disabled:ring-transparent">Brute Force</button>
       </div>
 
       <hr class="h-px bg-slate-800 border-0">
@@ -64,12 +91,12 @@
 
       <div class="flex gap-2 justify-between">
         <div class="font-semibold text-sm self-center whitespace-nowrap">Step Duration: </div>
-        <input size="1" step="0.05" type="number" id="step-duration" class="bg-slate-800 w-20 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none focus:ring-2 ring-transparent focus:ring-indigo-500 min-w-0 ring-1 ring-slate-700 ring-inset" value="0.4">
+        <input size="1" step="0.05" type="number" id="step-duration" class="bg-slate-800 w-20 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 min-w-0 ring-1 ring-slate-700 ring-inset" value="0.4">
       </div>
       
       <div class="flex gap-2 justify-between">
         <div class="font-semibold text-sm self-center whitespace-nowrap">Step Delay: </div>
-        <input size="1" step="0.05" type="number" id="step-delay" class="bg-slate-800 w-20 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none focus:ring-2 ring-transparent focus:ring-indigo-500 min-w-0 ring-1 ring-slate-700 ring-inset" value="0.15">
+        <input size="1" step="0.05" type="number" id="step-delay" class="bg-slate-800 w-20 duration-100 px-2 py-1 text-slate-50 rounded-lg shadow-sm outline-none focus:ring-2 focus:ring-indigo-500 min-w-0 ring-1 ring-slate-700 ring-inset" value="0.15">
       </div>
 
 
