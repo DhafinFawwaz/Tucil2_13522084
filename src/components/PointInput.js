@@ -27,14 +27,75 @@ export function PointInput(name, defaultX, defaultY, onRemove, onChange) {
   })
   const inputs = template.content.querySelectorAll('input');
   inputs[0].addEventListener('input', e => {
+    if(!isValid(e)) return;
     const newPos = new Point(parseFloat(e.target.value), parseFloat(inputs[1].value))
     if(onChange) onChange(newPos)
   });
   inputs[1].addEventListener('input', e => {
-    const newPos = new Point(parseFloat(e.target.value), parseFloat(inputs[1].value))
+    if(!isValid(e)) return;
+    const newPos = new Point(parseFloat(inputs[0].value), parseFloat(e.target.value))
     if(onChange) onChange(newPos)
   });
+
+  /**
+   * @param {Event} e 
+   * @returns 
+   */
+  function isValid(e) {
+    /** @type {string} */
+    const value = e.target.value
+    // last index is ., return false. it means the user is typing a float number
+
+    if(occurrences(value, '.') > 1) {
+      console.log('more than one .')
+      e.target.value = replaceStringExceptFirstFound(value, '.', '')
+    }
+
+    if(value[value.length - 1] === '.') return false;
+    
+    
+    return !isNaN(value) && value !== ''
+  }
   
 
   return [template, inputs[0], inputs[1]]
+}
+
+
+/**
+ * @param {string} string 
+ * @param {string} subString 
+ * @returns 
+ */
+function occurrences(string, subString) {
+  if (subString.length <= 0) return (string.length + 1);
+
+  let n = 0; 
+  let pos = 0;
+
+  while (true) {
+    pos = string.indexOf(subString, pos);
+    if (pos >= 0) {
+        ++n;
+        pos++;
+    } else break;
+  }
+  return n;
+}
+
+/**
+ * 
+ * @param {string} string 
+ * @param {string} subString 
+ * @param {string} replace 
+ * @returns 
+ */
+function replaceStringExceptFirstFound(string, subString, replace) {
+  const index = string.indexOf(subString);
+  if(index === -1) return string;
+
+  /** @type {string} */
+  const result = string.replaceAll(subString, replace);
+
+  return result.substring(0, index) + subString + result.substring(index + 1)
 }

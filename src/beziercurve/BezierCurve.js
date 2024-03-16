@@ -1,6 +1,5 @@
 import { Application, Container, Point } from "pixi.js";
 import { DragablePoint } from "../components/DragablePoint";
-import { LineFollow } from "../components/LineFollow";
 import Data from "../config/data.json";
 import CenterPoint from "./CenterPoint";
 import LerpPoint from "./LerpPoint";
@@ -24,6 +23,8 @@ export default class BezierCurve{
     this.syncablePointResult.forEach(p => {
       p.sync();
       onRefresh(p);
+      // console.log(p);
+      // console.log(p.x);
     });
   }
 

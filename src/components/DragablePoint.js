@@ -1,19 +1,21 @@
-import { Graphics, Circle, Text, Application, Point, GraphicsContext, Rectangle, BitmapText, Filter } from 'pixi.js';
+import { Graphics, Circle, Text, Application, Point, Rectangle, BitmapText, Filter } from 'pixi.js';
+// import { GraphicsContext } from 'pixi.js';
 import Event from '../event/Event.js';
 import Data from "../config/data.json"
 import { app } from '../main.js';
+import { Viewport } from 'pixi-viewport';
 
 export class DragablePoint extends Graphics {
 
-  static graphicContextWhite = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.slate50).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.slate50);
-  static graphicContextYellow = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.yellow400).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.yellow400);
+  // static graphicContextWhite = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.slate50).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.slate50);
+  // static graphicContextYellow = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.yellow400).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.yellow400);
   
   /**
    * @param {number} radius 
    */
   static resizeGraphicContext(radius) {
-    DragablePoint.graphicContextWhite = new GraphicsContext().circle(0, 0, radius).fill(Data.slate50).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.slate50);
-    DragablePoint.graphicContextYellow = new GraphicsContext().circle(0, 0, radius).fill(Data.yellow400).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.yellow400);
+    // DragablePoint.graphicContextWhite = new GraphicsContext().circle(0, 0, radius).fill(Data.slate50).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.slate50);
+    // DragablePoint.graphicContextYellow = new GraphicsContext().circle(0, 0, radius).fill(Data.yellow400).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.yellow400);
   }
 
   /**
@@ -24,13 +26,20 @@ export class DragablePoint extends Graphics {
    */
   constructor(x, y) {
     super();
-    this.context = DragablePoint.graphicContextWhite;
+    // this.context = DragablePoint.graphicContextWhite;
     this.interactive = false;
     this.hitArea = new Rectangle(0,0,0,0);
        
     this.onMove = new Event(this);
     this.setPosition(x, y);
+    this.draw();
+  }
 
+  draw() {
+    this.clear();
+    this.beginFill(Data.slate50).drawCircle(0, 0, Data.pointRadius)
+      .beginFill(Data.slate950).drawCircle(0, 0, Data.pointRadius*0.80)
+      .beginFill(Data.slate50).drawCircle(0, 0, Data.pointRadius*0.40)
   }
 
   /**
@@ -70,22 +79,22 @@ export class DragablePoint extends Graphics {
   /**
    * Set this point to be dragable with cursor
    * @param {Application} app the dependency to to the app is needed to add the event listener
+   * @param {Viewport} viewport get zoom percent
    */
-  setDragable(app) {
+  setDragable(app, viewport) {
     this.app = app;
-    this.on('pointerdown', this.onDragStart, this);
-
+    this.viewport = viewport;
     this.eventMode = 'static';
     this.cursor = 'pointer';
     this.hitArea = new Circle(0, 0, Data.pointRadius*4);
     this.on('pointerover', () => {
       this.alpha = 0.75;
-      // this.tint = Data.indigo600;
     });
     this.on('pointerout', () => {
       this.alpha = 1;
-      // this.tint = 0xFFFFFF;
     });
+    this.on('pointerdown', () => this.onDragStart());
+    this.on('pointerup', () => this.onDragEnd());
   }
 
   // Have to resort to static variable because for some reason, the 'this' context is lost in the onDragMove function
@@ -97,34 +106,37 @@ export class DragablePoint extends Graphics {
    */
   onDragStart(){
     DragablePoint.currentTarget = this;
-    this.app.stage.on('pointermove', DragablePoint.onDragMove);
+    this.viewport.drag({
+      pressDrag: false
+    })
+    this.app.renderer.view.addEventListener('pointermove', DragablePoint.onDragMove);
   }
   static onDragMove(event){
     if (DragablePoint.currentTarget){
-      // DragablePoint.currentTarget.setPosition(event.data.global.x, -event.data.global.y + app.renderer.height);
-      
       // Handle zoom on mouse wheel
-      const zoomX = app.stage.scale.x;
-      const zoomY = app.stage.scale.y;
-      const mouseX = event.data.global.x;
-      const mouseY = event.data.global.y;
+      const zoom = DragablePoint.currentTarget.viewport.scale.x;
+      const mouseX = event.x + DragablePoint.currentTarget.viewport.left;
+      const mouseY = event.y + DragablePoint.currentTarget.viewport.top;
 
-      const newX = (mouseX - app.stage.x) / zoomX;
-      const newY = (mouseY - app.stage.y) / zoomY;
+      const newX = (mouseX) / 1;
+      const newY = (mouseY) / 1;
+
       DragablePoint.currentTarget.setPosition(newX, newY);
-      
     }
   }
-  static onDragEnd(){
+  onDragEnd(){
     if(DragablePoint.currentTarget){
-      DragablePoint.currentTarget.app.stage.off('pointermove', this.onDragMove);
+      DragablePoint.currentTarget.app.renderer.view.removeEventListener('pointermove', DragablePoint.onDragMove);
+      DragablePoint.currentTarget.viewport.drag({
+        pressDrag: true
+      })
       DragablePoint.currentTarget = null;
     }
   }
 
   updateContext() {
-    this.clear();
-    this.context = DragablePoint.graphicContextWhite;
+    // this.clear();
+    // this.context = DragablePoint.graphicContextWhite;
   }
 
 }

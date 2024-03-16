@@ -1,6 +1,6 @@
 import "./style.css"
 import { PointInput } from './components/PointInput.js'
-import { Application, Graphics, Container, Rectangle, Point } from 'pixi.js';
+import { Application, Graphics, Container, Rectangle, Point, Sprite, Texture } from 'pixi.js';
 import Data from "./config/data.json"
 import { DragablePoint } from "./components/DragablePoint.js";
 import BezierCurve from "./beziercurve/BezierCurve";
@@ -13,14 +13,30 @@ import { floorTo, randomRange, roundTo } from "./beziercurve/Math.js";
 import { SidebarOpen, LeftSidebarClose, RightSidebarClose } from "./components/Sidebar";
 import { AlgorithmOption } from "./components/AlgorithmOption";
 import BackgroundGraphic from "./components/BackgroundGraphic";
+import { Viewport } from "pixi-viewport";
 
 let algorithmId = 0; // 0: divide and conquer, 1: brute force
 
-export const app = new Application(); // Imported by DraggablePoint for dragging points
+export const app = new Application({
+  resizeTo: window,
+  backgroundColor: Data.slate950
+}); // Imported by DraggablePoint for dragging points
 const rightMargin = Data.leftMargin; // width of the sidebar
 
-/** @type {Container} Container for graphics */ 
-const graphicContainer = new Container();
+/** @type {Viewport} Container for graphics */ 
+const graphicContainer = new Viewport({
+  screenWidth: window.innerWidth,
+  screenHeight: window.innerHeight,
+  worldWidth: 1000,
+  worldHeight: 1000,
+  events: app.renderer.events 
+})
+graphicContainer.animate({
+  time: 0,
+  position: new Point(0,0),
+})
+graphicContainer.drag().pinch().wheel().decelerate({friction: 0.85});
+
 
 /** To tell when to redraw the curve */
 let visualizationState = 0; // 0: None, 1: Normal, 2: Steps
@@ -42,8 +58,8 @@ const inputLinesGraphic = new Graphics();
 
 /** @type {Graphics} Graphic that draws the input lines */ 
 const lineResultGraphic = new Graphics();
-lineResultGraphic.interactive = false;
-lineResultGraphic.hitArea = new Rectangle(0,0,0,0)
+// lineResultGraphic.interactive = false;
+// lineResultGraphic.hitArea = new Rectangle(0,0,0,0)
 
 /** ====================================================================== **/
 
@@ -91,8 +107,8 @@ let canZoom = true;
 function redrawInputLines() {
   inputLinesGraphic.clear();
   for(let i = 0; i < inputPoints.length-1; i++) {
-    inputLinesGraphic.moveTo(inputPoints[i].x, inputPoints[i].y).lineTo(inputPoints[i+1].x, inputPoints[i+1].y)
-      .fill(Data.slate50).stroke({ width: Data.lineWidth, color: Data.slate50 });
+    inputLinesGraphic.beginFill(Data.slate50).lineStyle({ width: Data.lineWidth, color: Data.slate50 })
+      .moveTo(inputPoints[i].x, inputPoints[i].y).lineTo(inputPoints[i+1].x, inputPoints[i+1].y)
   }
 }
 
@@ -104,8 +120,8 @@ let resultCoordinatePoints = [];
 function redrawLineResult(){
   lineResultGraphic.clear();
   bezierCurve.refresh(p => {
-    lineResultGraphic.moveTo(p.point1.x, p.point1.y).lineTo(p.point2.x, p.point2.y)
-      .fill(Data.yellow400).stroke({ width: Data.lineWidth, color: Data.yellow400 });
+    lineResultGraphic.beginFill(Data.yellow400).lineStyle({ width: Data.lineWidth, color: Data.yellow400 })
+      .moveTo(p.point1.x, p.point1.y).lineTo(p.point2.x, p.point2.y)
   });
 
   // Handle the result coordinate checkbox
@@ -113,7 +129,7 @@ function redrawLineResult(){
     while(resultCoordinateTexts.length < bezierCurve.syncablePointResult.length-1) {
       const coordinateText = new CoordinateText();
       coordinateText.style.fill = Data.yellow400;
-      const circleGraphic = new Graphics(DragablePoint.graphicContextYellow);
+      // const circleGraphic = new Graphics(DragablePoint.graphicContextYellow);
       resultCoordinatePoints.push(circleGraphic);
       circleGraphic.x = -Data.coordinateTextOffset;
       circleGraphic.y = -Data.coordinateTextOffset;
@@ -192,9 +208,9 @@ function addInput(defaultX, defaultY) {
   const name = `P${highestId}`;
 
   const dragablePoint = new DragablePoint(defaultX, defaultY);
-  dragablePoint.setDragable(app);
+  dragablePoint.setDragable(app, graphicContainer);
   const coordinateText = new CoordinateText();
-  coordinateText.attachToDraggablePoint(dragablePoint, Data.coordinateTextOffset, Data.coordinateTextOffset, name);
+  coordinateText.attachToDraggablePoint(dragablePoint, Data.coordinateTextOffsetX, Data.coordinateTextOffsetY, name);
   
   graphicContainer.addChild(dragablePoint);
   inputPoints.push(dragablePoint);
@@ -225,7 +241,10 @@ function addInput(defaultX, defaultY) {
       }
 
   }, (newPos) => { // onPositionChange
-      dragablePoint.setPosition(newPos.x + getHalfAppHeight(), newPos.y + getHalfAppHeight());
+      // dragablePoint.setPosition(newPos.x + getHalfAppHeight(), newPos.y + getHalfAppHeight());
+      dragablePoint.x = newPos.x + getHalfAppHeight();
+      dragablePoint.y = newPos.y + getHalfAppHeight();
+      coordinateText.setText(newPos.x + getHalfAppHeight(), newPos.y + getHalfAppHeight());
   });
   
   dragablePoint.addOnMoveListener((sender, {x, y}) => {
@@ -253,8 +272,22 @@ function visualizeCurve() {
     bezierCurve.generateByDivideAndConquer(p, iterations);
   else
     bezierCurve.generateByBruteForce(p, iterations);
-  setTimeTaken((performance.now() - startTime).toFixed(2));
+  const timeTaken = (performance.now() - startTime);
+  setTimeTaken(timeTaken.toFixed(2));
+  logResult(bezierCurve, timeTaken);
   redrawLineResult();
+}
+
+/**
+ * @param {BezierCurve} bezierCurve 
+ * @param {number} timeTaken 
+ */
+function logResult(bezierCurve, timeTaken) {
+  const h = getHalfAppHeight();
+  let points = bezierCurve.syncablePointResult.map(p => [p.point2.x-h, p.point2.y-h]);
+  points.unshift([bezierCurve.syncablePointResult[0].point1.x-h, bezierCurve.syncablePointResult[0].point1.y-h]);
+  console.log(`Time taken: ${timeTaken} ms`);
+  console.log("Points: ", points);
 }
 
 /** Solve the Bezier Curve and draw with step by step animation */
@@ -318,11 +351,10 @@ function InitializeCurves() {
 }
 
 /** Initialize canvas and connect GUI with inputs */
+
 (async () =>
 {
-  // await app.init({ background: Data.slate950, width:canvasWidth, height: canvasheight });
-  await app.init({ background: Data.slate950, resizeTo: window});
-  backgroundGraphic = new BackgroundGraphic(app);
+  backgroundGraphic = new BackgroundGraphic(graphicContainer);
   addEventListener("resize", () => backgroundGraphic.refreshBackground());
   InitializeCurves();
   
@@ -360,95 +392,27 @@ function InitializeCurves() {
   document.getElementById('input-lines').addEventListener('change', toggleInputLines);
   document.getElementById('zoom-scroll-wheel').addEventListener('change', toggleZoomScrollWheel);
 
-  addInput(app.renderer.width*0.3, app.renderer.height*0.2);
-  addInput(app.renderer.width*0.4, app.renderer.height*0.7);
-  addInput(app.renderer.width*0.6, app.renderer.height*0.7);
-  addInput(app.renderer.width*0.7, app.renderer.height*0.2);
+  addInput(-200, 200);
+  addInput(-100, -200);
+  addInput( 100, -200);
+  addInput( 200, 200);
 
-  app.stage.position.y = app.renderer.height / app.renderer.resolution;
-  app.stage.scale.y = -1;
+  // app.stage.position.y = app.renderer.height / app.renderer.resolution;
+  // app.stage.scale.y = -1;
 
   app.stage.addChild(graphicContainer);
 
-  // To make points dragable
-  app.stage.eventMode = 'static';
-  app.stage.hitArea = app.screen;
-
-  // zoom stage by wheel
-  let lastStagePos = new Point();
-  addEventListener('wheel' , (e) => {
-    if(!canZoom) return;
-    const zoom = e.deltaY > 0 ? 1.1 : 0.9;
-
-    const previousWidth = app.renderer.width;
-    const previousHeight = app.renderer.height;
-    const previousPositionX = app.stage.position.x;
-    const previousPositionY = app.stage.position.y;
-
-
-    app.renderer.resize(app.renderer.width * zoom, app.renderer.height * zoom);
-    app.stage.position.y = app.renderer.height / app.renderer.resolution;
-    app.stage.position.x = 0;
-    backgroundGraphic.refreshBackground();
-
-    // Resize data bazed on zoom
-    Data.lineWidth *= zoom;
-    Data.pointRadius *= zoom;
-    Data.pointFontSize *= zoom;
-    DragablePoint.resizeGraphicContext(Data.pointRadius);
-    backgroundGraphic.resizeAllText(Data.pointFontSize);
-    inputPoints.forEach(p => p.updateContext());
-    resultCoordinatePoints.forEach(p => p.context = DragablePoint.graphicContextYellow);
-    inputCoordinateTexts.forEach(p => p.resizeText(Data.pointFontSize));
-
-
-    // move all points to handle negative
-    inputPoints.forEach(p => {
-      const x = p.x * zoom;
-      const y = p.y * zoom;
-      p.setPosition(x, y);
-    });
-  });
-
-
-
-  
-  // Drag stage with mouse
-  let isDragging = false;
-  app.stage.on('pointerup', () => {
-    DragablePoint.onDragEnd();
-    isDragging = false;
-  });
-  app.stage.on('pointerupoutside', () => {
-    DragablePoint.onDragEnd();
-    isDragging = false;
-  });
-  app.stage.on('pointerdown', (e) => {
-    isDragging = true;
-    lastStagePos = e.global.clone();
-  });
-  app.stage.on('pointermove', (e) => {
-    if(DragablePoint.currentTarget) return; // if dragging point, don't drag stage
-    if(isDragging) {
-      const newPos = e.global.clone();
-      app.stage.position.x += newPos.x - lastStagePos.x;
-      app.stage.position.y += newPos.y - lastStagePos.y;
-      lastStagePos = newPos;
-    }
-  });
-  
-
-
 
   // To make the canvas full screen
-  app.canvas.style.position = 'fixed';
-  app.canvas.style.top = 0;
-  app.canvas.style.left = 0;
-  app.canvas.style.height = '100%';
-  document.body.appendChild(app.canvas);
+  app.view.style.position = 'fixed';
+  app.view.style.top = 0;
+  app.view.style.left = 0;
+  app.view.style.height = '100%';
+  document.body.appendChild(app.view);
 
   // Using this loop is faster than subscribing to mouse move event
   app.ticker.add((ticker) => {
+
     bezierCurveAnimator.update(ticker);
     if(!dynamicUpdate) return;
 
@@ -459,6 +423,7 @@ function InitializeCurves() {
   });
 
 })();
+
 /** ================================================ Initialization End ================================================ **/
 
 
@@ -475,6 +440,7 @@ export function getHalfAppWidth() {
  * Handle negative. change this to return 0 if we dont want negative coordinate anymore
  */
 export function getHalfAppHeight() {
-  return roundTo(app.screen.height/2, 50);
+  // return roundTo(app.screen.height/2, 50);
   // return app.screen.height/2;
+  return 0;
 }

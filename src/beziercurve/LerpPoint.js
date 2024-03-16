@@ -10,6 +10,7 @@ export default class LerpPoint extends SyncablePoint {
   constructor(point1, point2, progress) {
     super(point1, point2);
     this.progress = progress;
+    this.sync();
   }
   
   /**

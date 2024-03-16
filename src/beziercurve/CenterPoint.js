@@ -7,6 +7,12 @@ import SyncablePoint from "./SyncablePoint";
  */
 export default class CenterPoint extends SyncablePoint {
 
+  
+  constructor(point1, point2) {
+    super(point1, point2);
+    this.sync();
+  }
+
   // override
   /**
    * Update the position of this point to be in the center of both points.

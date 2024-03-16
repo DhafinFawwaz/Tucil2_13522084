@@ -6,7 +6,8 @@
     "x": 10,
     "y": 10
   },
-  "coordinateTextOffset" : 10,
+  "coordinateTextOffsetX" : 10,
+  "coordinateTextOffsetY" : -10,
   "slate50": "#f8fafc",
   "slate200": "#e2e8f0",
   "slate300": "#cbd5e1",
