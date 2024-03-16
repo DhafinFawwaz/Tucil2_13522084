@@ -1,6 +1,6 @@
 import "./style.css"
 import { PointInput } from './components/PointInput.js'
-import { Application, Graphics, Container, Rectangle, Point, Text } from 'pixi.js';
+import { Application, Graphics, Container, Rectangle, Point } from 'pixi.js';
 import Data from "./config/data.json"
 import { DragablePoint } from "./components/DragablePoint.js";
 import BezierCurve from "./beziercurve/BezierCurve";
@@ -9,7 +9,7 @@ import getIteration from "./components/IterationInput";
 import SyncablePoint from "./beziercurve/SyncablePoint";
 import { CoordinateText } from "./components/CoordinateText";
 import { BezierCurveAnimator } from "./beziercurve/BezierCurveAnimator";
-import { randomRange } from "./beziercurve/Math";
+import { floorTo, randomRange, roundTo } from "./beziercurve/Math.js";
 import { SidebarOpen, LeftSidebarClose, RightSidebarClose } from "./components/Sidebar";
 import { AlgorithmOption } from "./components/AlgorithmOption";
 import BackgroundGraphic from "./components/BackgroundGraphic";
@@ -112,6 +112,7 @@ function redrawLineResult(){
   if(showResultCoordinate && resultCoordinateTexts.length !== bezierCurve.syncablePointResult.length-1) {
     while(resultCoordinateTexts.length < bezierCurve.syncablePointResult.length-1) {
       const coordinateText = new CoordinateText();
+      coordinateText.style.fill = Data.yellow400;
       const circleGraphic = new Graphics(DragablePoint.graphicContextYellow);
       resultCoordinatePoints.push(circleGraphic);
       circleGraphic.x = -Data.coordinateTextOffset;
@@ -200,14 +201,17 @@ function addInput(defaultX, defaultY) {
   inputCoordinateTexts.push(coordinateText);
   redrawInputLines();
 
-  const [newInput, inputX, inputY] = PointInput(name, defaultX, defaultY, 
+  const [newInput, inputX, inputY] = PointInput(name, defaultX - getHalfAppHeight(), defaultY - getHalfAppHeight(), 
     (div) => { // onRemove
       highestId--;
       graphicContainer.removeChild(dragablePoint);
       inputPoints.splice(inputPoints.indexOf(dragablePoint), 1);
       inputCoordinateTexts.splice(inputCoordinateTexts.indexOf(coordinateText), 1);
       // rename the point names
-      inputCoordinateTexts.forEach((el, i) => el.rename(`P${i}`));
+      inputCoordinateTexts.forEach((el, i) => {
+        el.rename(`P${i}`);
+        el.setText(inputPoints[i].x, inputPoints[i].y);
+      });
       redrawInputLines();
 
       // update the point names
@@ -228,8 +232,8 @@ function addInput(defaultX, defaultY) {
   });
   
   dragablePoint.addOnMoveListener((sender, {x, y}) => {
-    inputX.value = x;
-    inputY.value = y;
+    inputX.value = x - getHalfAppHeight();
+    inputY.value = y - getHalfAppHeight();
   });
   highestId++;
   inputListParent.appendChild(newInput.content);
@@ -378,6 +382,13 @@ function InitializeCurves() {
   addEventListener('wheel' , (e) => {
     if(!canZoom) return;
     const zoom = e.deltaY > 0 ? 1.1 : 0.9;
+
+    const previousWidth = app.renderer.width;
+    const previousHeight = app.renderer.height;
+    const previousPositionX = app.stage.position.x;
+    const previousPositionY = app.stage.position.y;
+
+
     app.renderer.resize(app.renderer.width * zoom, app.renderer.height * zoom);
     app.stage.position.y = app.renderer.height / app.renderer.resolution;
     app.stage.position.x = 0;
@@ -390,8 +401,16 @@ function InitializeCurves() {
     DragablePoint.resizeGraphicContext(Data.pointRadius);
     backgroundGraphic.resizeAllText(Data.pointFontSize);
     inputPoints.forEach(p => p.updateContext());
-    resultCoordinatePoints.forEach(p => p.context = DragablePoint.graphicContextWhite);
+    resultCoordinatePoints.forEach(p => p.context = DragablePoint.graphicContextYellow);
     inputCoordinateTexts.forEach(p => p.resizeText(Data.pointFontSize));
+
+
+    // move all points to handle negative
+    inputPoints.forEach(p => {
+      const x = p.x * zoom;
+      const y = p.y * zoom;
+      p.setPosition(x, y);
+    });
   });
 
 
@@ -420,6 +439,7 @@ function InitializeCurves() {
       lastStagePos = newPos;
     }
   });
+  
 
 
 
@@ -443,3 +463,21 @@ function InitializeCurves() {
 
 })();
 /** ================================================ Initialization End ================================================ **/
+
+
+// Below is for handling negative. Bad way of doing it because it feels like singleton function, but i wont touch it anymore so i hope its fine.
+
+/**
+ * Handle negative. change this to return 0 if we dont want negative coordinate anymore
+ */
+export function getHalfAppWidth() {
+  return roundTo(app.screen.width/2, 50);
+}
+
+/**
+ * Handle negative. change this to return 0 if we dont want negative coordinate anymore
+ */
+export function getHalfAppHeight() {
+  return roundTo(app.screen.height/2, 50);
+  // return app.screen.height/2;
+}

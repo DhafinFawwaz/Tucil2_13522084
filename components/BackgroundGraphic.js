@@ -1,5 +1,7 @@
 import { Application, Graphics, Text } from "pixi.js";
 import Data from "../config/data.json"
+import { roundTo } from "../beziercurve/Math";
+import { getHalfAppHeight, getHalfAppWidth } from "../main";
 
 // Draw coordinate system
 export default class BackgroundGraphic extends Graphics {
@@ -21,24 +23,39 @@ export default class BackgroundGraphic extends Graphics {
 
     this.clear();
     this.removeAllText();
-    for(let i = 0; i < width; i += this.range) {
-      this.moveTo(i, 0);
-      this.lineTo(i, height);
-      const text = this.createText(i);
+
+    // Absis and ordinat line
+    this.moveTo(0, getHalfAppHeight());
+    this.lineTo(width, getHalfAppHeight());
+    this.moveTo(getHalfAppHeight(), 0);
+    this.lineTo(getHalfAppHeight(), height);
+    this.stroke({ width: 2, color: Data.slate700 });
+    // Absis text
+    for(let i = this.range; i < width; i += this.range) {
+      const text = this.createText(i-getHalfAppHeight());
       text.anchor.set(0, 1);
       text.x = i;
-      text.y = 0;
+      text.y = getHalfAppHeight();
       this.addChild(text);
     }
-    this.moveTo(0, 0.5); // bottom horizontal line
-    this.lineTo(width, 0.5);
+    // Ordinat text
+    for(let i = this.range; i < height; i += this.range) {
+      const text = this.createText(i-getHalfAppHeight());
+      text.anchor.set(0, 1);
+      text.x = getHalfAppHeight();
+      text.y = i;
+      this.addChild(text);
+    }
+
+
+    // Draw the grid lines. handle  getHalfAppHeight()
+    for(let i = this.range; i < width; i += this.range) {
+      this.moveTo(i, 0);
+      this.lineTo(i, height);
+    }
     for(let i = this.range; i < height; i += this.range) {
       this.moveTo(0, i);
       this.lineTo(width, i);
-      const text = this.createText(i);
-      text.x = 0;
-      text.y = i;
-      this.addChild(text);
     }
     this.stroke({ width: 1, color: Data.slate800 });
   }
@@ -48,7 +65,7 @@ export default class BackgroundGraphic extends Graphics {
    */
   createText(number) {
     const text = new Text({
-      text: number.toString(),
+      text: (number).toString(),
       style: {
         fontSize: Data.pointFontSize,
         fill: Data.slate50

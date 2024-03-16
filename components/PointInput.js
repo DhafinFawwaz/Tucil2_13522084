@@ -1,4 +1,5 @@
 import { Point } from "pixi.js"
+import { getHalfAppHeight } from "../main"
 
 /**
  * 
@@ -26,15 +27,14 @@ export function PointInput(name, defaultX, defaultY, onRemove, onChange) {
   })
   const inputs = template.content.querySelectorAll('input');
   inputs[0].addEventListener('input', e => {
-    const newPos = new Point(parseFloat(e.target.value), parseFloat(inputs[1].value))
+    const newPos = new Point(parseFloat(e.target.value) - getHalfAppHeight(), parseFloat(inputs[1].value - getHalfAppHeight()))
     if(onChange) onChange(newPos)
   });
   inputs[1].addEventListener('input', e => {
-    const newPos = new Point(parseFloat(e.target.value), parseFloat(inputs[1].value))
+    const newPos = new Point(parseFloat(e.target.value - getHalfAppHeight()), parseFloat(inputs[1].value - getHalfAppHeight()))
     if(onChange) onChange(newPos)
   });
   
-  // template.content.querySelector("#name").textContent = `P${100}`
 
   return [template, inputs[0], inputs[1]]
 }

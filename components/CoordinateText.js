@@ -1,6 +1,7 @@
 import { BitmapText } from "pixi.js";
 import { DragablePoint } from "./DragablePoint";
 import Data from "../config/data.json";
+import { getHalfAppHeight } from "../main";
 
 
 export class CoordinateText extends BitmapText {
@@ -36,12 +37,13 @@ export class CoordinateText extends BitmapText {
    * @param {number} y 
    */
   setText(x, y){
+    x -= getHalfAppHeight();
+    y -= getHalfAppHeight();
     this.text = `${this.name}(${x.toFixed(2)}, ${y.toFixed(2)})`;
   }
 
   rename(name) {
     this.name = name;
-    this.setText(this.x, this.y);
   }
 
   /**
