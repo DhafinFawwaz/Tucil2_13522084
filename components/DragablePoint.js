@@ -13,7 +13,7 @@ export class DragablePoint extends Graphics {
    */
   static resizeGraphicContext(radius) {
     DragablePoint.graphicContextWhite = new GraphicsContext().circle(0, 0, radius).fill(Data.slate50).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.slate50);
-    DragablePoint.graphicContextWhite = new GraphicsContext().circle(0, 0, radius).fill(Data.yellow400).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.yellow400);
+    DragablePoint.graphicContextYellow = new GraphicsContext().circle(0, 0, radius).fill(Data.yellow400).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.yellow400);
   }
 
   /**

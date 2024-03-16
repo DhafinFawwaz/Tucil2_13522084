@@ -82,7 +82,7 @@ let backgroundGraphic;
 /** ====================================================================== **/
 
 let dynamicUpdate = true;
-let showResultCoordinate = true;
+let showResultCoordinate = false;
 let showInputLines = true;
 let canZoom = true;
 
@@ -98,9 +98,9 @@ function redrawInputLines() {
 
 /** Redraw line results*/
 /** @type {CoordinateText[]} */
-const resultCoordinateTexts = [];
+let resultCoordinateTexts = [];
 /** @type {Graphics[]} */
-const resultCoordinatePoints = [];
+let resultCoordinatePoints = [];
 function redrawLineResult(){
   lineResultGraphic.clear();
   bezierCurve.refresh(p => {
@@ -132,7 +132,7 @@ function redrawLineResult(){
   
   if(!showResultCoordinate && resultCoordinateTexts.length > 0) {
     resultCoordinateTexts.forEach(p => graphicContainer.removeChild(p));
-    resultCoordinateTexts.length = 0;    
+    resultCoordinateTexts = [];    
   }
   
   if(showResultCoordinate  && resultCoordinateTexts.length === bezierCurve.syncablePointResult.length-1) {
@@ -264,8 +264,8 @@ async function showStepsAnimated() {
   const p = inputPoints;
   const iterations = getIteration();
   bezierCurve.clear();
-  stepPoints.length = 0;
-  stepLines.length = 0;
+  stepPoints = [];
+  stepLines = [];
   visualizationState = 2;
   if(algorithmId === 0)
     await bezierCurve.generateWithStepsByDivideAndConquer(p, iterations, stepDelay*1000, p => {
@@ -308,12 +308,12 @@ function InitializeCurves() {
   inputPoints.forEach(p => graphicContainer.addChild(p));
   redrawInputLines();
   lineResultGraphic.clear();
-  stepPoints.length = 0;
-  stepLines.length = 0;
+  stepPoints = [];
+  stepLines = [];
   stepsGraphic.clear();
   animatedStepsGraphic.clear();
   bezierCurve.clear();
-  resultCoordinateTexts.length = 0;    
+  resultCoordinateTexts = [];    
 }
 
 /** Initialize canvas and connect GUI with inputs */
@@ -425,7 +425,6 @@ function InitializeCurves() {
   app.canvas.style.left = 0;
   app.canvas.style.height = '100%';
   document.body.appendChild(app.canvas);
-  bezierCurveAnimator.removeAnimationWhenFinished = false;
 
   // Using this loop is faster than subscribing to mouse move event
   app.ticker.add((ticker) => {
