@@ -225,10 +225,7 @@ function addInput(defaultX, defaultY) {
       }
 
   }, (newPos) => { // onPositionChange
-      if(visualizationState !== 0) {
-        InitializeCurves();
-      }
-      dragablePoint.setPosition(newPos.x, newPos.y);
+      dragablePoint.setPosition(newPos.x + getHalfAppHeight(), newPos.y + getHalfAppHeight());
   });
   
   dragablePoint.addOnMoveListener((sender, {x, y}) => {

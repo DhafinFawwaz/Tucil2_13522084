@@ -10,7 +10,7 @@ This repository contains implementation of Bezier Curve using Divide & Conquer a
 - Compare betweent the Divide & Conquer and Brute Force Algorithm
 - Interactive Dragable points
 
-## Technologies Used
+## 🔍 Technologies Used
 - Pixi.js
 - Vite
 - Node.js
@@ -21,13 +21,15 @@ This repository contains implementation of Bezier Curve using Divide & Conquer a
 For the live demo, simply open this link [_here_](https://beziercurvegenerator.vercel.app)
 For the development server, make sure node is installed. Then run
 ```
+cd src
 npm install
 ```
 To start the development server, run
 ```
+cd src
 npm run dev
 ```
 
-## Screenshots
+## 🖼️ Screenshots
 ![1](./test/1.png)
 
