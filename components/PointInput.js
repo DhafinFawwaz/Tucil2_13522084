@@ -26,11 +26,11 @@ export function PointInput(name, defaultX, defaultY, onRemove, onChange) {
   })
   const inputs = template.content.querySelectorAll('input');
   inputs[0].addEventListener('input', e => {
-    const newPos = new Point(e.target.value, inputs[1].value)
+    const newPos = new Point(parseFloat(e.target.value), parseFloat(inputs[1].value))
     if(onChange) onChange(newPos)
   });
   inputs[1].addEventListener('input', e => {
-    const newPos = new Point(inputs[0].value, e.target.value)
+    const newPos = new Point(parseFloat(e.target.value), parseFloat(inputs[1].value))
     if(onChange) onChange(newPos)
   });
   

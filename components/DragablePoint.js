@@ -30,8 +30,8 @@ export class DragablePoint extends Graphics {
    */
   setPosition(x, y) {
     this.x = x;
-    this.y = y;
-    if(this.onMove){
+    this.y = y; 
+    if(this.onMove) {
       this.onMove.notify({x: this.x, y: this.y})
     }
   }
@@ -80,6 +80,7 @@ export class DragablePoint extends Graphics {
   }
 
   // Have to resort to static variable because for some reason, the 'this' context is lost in the onDragMove function
+  /** @type {DragablePoint} */
   static currentTarget = null;
 
   /**

@@ -11,7 +11,7 @@ import BezierCurveOld from "./beziercurve/BezierCurveOld";
 import { CoordinateText } from "./components/CoordinateText";
 import { BezierCurveAnimator } from "./beziercurve/BezierCurveAnimator";
 import { randomRange } from "./beziercurve/math";
-import { SidebarOpen, SidebarClose } from "./components/Sidebar";
+import { SidebarOpen, LeftSidebarClose, RightSidebarClose } from "./components/Sidebar";
 import { AlgorithmOption } from "./components/AlgorithmOption";
 import BackgroundGraphic from "./components/BackgroundGraphic";
 
@@ -54,10 +54,10 @@ stepsGraphic.interactive = false;
 stepsGraphic.hitArea = new Rectangle(0,0,0,0)
 
 /** @type {SyncablePoint[]} List of step points */ 
-let stepPoints = [];
+const stepPoints = [];
 
 /** @type {SyncablePoint[]} List of step lines */ 
-let stepLines = [];
+const stepLines = [];
 
 /** ====================================================================== **/
 
@@ -218,6 +218,9 @@ function addInput(defaultX, defaultY) {
       }
 
   }, (newPos) => { // onPositionChange
+      if(visualizationState !== 0) {
+        InitializeCurves();
+      }
       dragablePoint.setPosition(newPos.x, newPos.y);
   });
   
@@ -255,8 +258,8 @@ async function showStepsAnimated() {
   const p = inputPoints;
   const iterations = getIteration();
   bezierCurve.clear();
-  stepPoints = [];
-  stepLines = [];
+  stepPoints.length = 0;
+  stepLines.length = 0;
   visualizationState = 2;
   if(algorithmId === 0)
     await bezierCurve.generateWithStepsByDivideAndConquer(p, iterations, stepDelay*1000, p => {
@@ -299,9 +302,10 @@ function InitializeCurves() {
   inputPoints.forEach(p => graphicContainer.addChild(p));
   redrawInputLines();
   lineResultGraphic.clear();
-  stepPoints = [];
-  stepLines = [];
+  stepPoints.length = 0;
+  stepLines.length = 0;
   stepsGraphic.clear();
+  animatedStepsGraphic.clear();
   bezierCurve.clear();
   resultCoordinateTexts.length = 0;    
 }
@@ -329,8 +333,8 @@ function InitializeCurves() {
   const leftSidebar = document.getElementById('left-sidebar');
   const sidebarClose = document.getElementById('sidebar-close');
   sidebarClose.addEventListener('click', (e) => {
-    SidebarClose(sidebarClose, rightSidebar);
-    SidebarClose(sidebarClose, leftSidebar);
+    RightSidebarClose(sidebarClose, rightSidebar);
+    LeftSidebarClose(sidebarClose, leftSidebar);
   });
   document.getElementById('right-sidebar-open').addEventListener('click', (e) => SidebarOpen(sidebarClose, rightSidebar));
   document.getElementById('left-sidebar-open').addEventListener('click', (e) => SidebarOpen(sidebarClose, leftSidebar));

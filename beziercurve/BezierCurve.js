@@ -69,14 +69,30 @@ export default class BezierCurve{
       count += length - i + 1;
     }
 
-    count = 0;
+    // 0 1 2 | 3 4 | 5
+    // left: 0 3 5
+    // right: 5 4 2
+
+    let countLeft = 0;
+    let countRight = centerList.length - 1;
     left.push(p[0]); // 0
-    right.push(p[length-1]); // 3
     for(let i = 1; i < length; i++) {
-      left.push(centerList[count]);
-      count += length - i;
-      right.push(centerList[count-1]);
+      left.push(centerList[countLeft]);
+      right.push(centerList[(countRight)]);
+      countLeft += length - i;
+      countRight -= i; 
+      // Dont actually need to be reversed, but the visualization will look better. Just 1 extra variable and same amount of operator
+      // Originally done like this:
+      //   left.push(centerList[count]);
+      //   count += length - i;
+      //   right.push(centerList[(count-1)]);
+      // which means no extra operator, just 1 extra variable
+      
+      // 2 count variable (countLeft, countRight) is better than with simple for loops but with more complex math with function below 
+      // right(x, a) = a - (x * (x + 1) / 2)  | x = i, a = p.length - 1
+      // left(x, b) = x * (2 * b + 1 - x) / 2 | x = i, b = centerList.length -1
     }
+    right.push(p[length-1]); // 3
 
     return [left, right, centerList];
   }
@@ -103,7 +119,7 @@ export default class BezierCurve{
       /** @type {CenterPoint} */
       const l1 = new CenterPoint(left[0], left[length-1]);
       /** @type {CenterPoint} */
-      const l2 = new CenterPoint(left[length-1], right[0]);
+      const l2 = new CenterPoint(left[length-1], right[length-1]);
 
       this.syncablePointResult.push(l1, l2);
     }
@@ -137,13 +153,13 @@ export default class BezierCurve{
 
     if(iterations > 1){
       this.generateWithStepsByDivideAndConquer(left, iterations - 1, delay, onStepPointFinished, onStepLineFinished);
-      this.generateWithStepsByDivideAndConquer(right.reverse(), iterations - 1, delay, onStepPointFinished, onStepLineFinished);
+      this.generateWithStepsByDivideAndConquer(right, iterations - 1, delay, onStepPointFinished, onStepLineFinished);
     } else {
 
       /** @type {CenterPoint} */
       const l1 = new CenterPoint(left[0], left[length-1]);
       /** @type {CenterPoint} */
-      const l2 = new CenterPoint(left[length-1], right[0]);
+      const l2 = new CenterPoint(left[length-1], right[length-1]);
       
       onStepLineFinished(l1); // await this.wait(delay);
       onStepLineFinished(l2); // await this.wait(delay);

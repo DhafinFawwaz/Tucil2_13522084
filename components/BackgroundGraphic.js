@@ -19,11 +19,14 @@ export default class BackgroundGraphic extends Graphics {
       this.moveTo(i, 0);
       this.lineTo(i, height);
       const text = this.createText(i);
+      text.anchor.set(0, 1);
       text.x = i;
       text.y = 0;
       this.addChild(text);
     }
-    for(let i = 0; i < height; i += this.range) {
+    this.moveTo(0, 0.5); // bottom horizontal line
+    this.lineTo(width, 0.5);
+    for(let i = this.range; i < height; i += this.range) {
       this.moveTo(0, i);
       this.lineTo(width, i);
       const text = this.createText(i);
