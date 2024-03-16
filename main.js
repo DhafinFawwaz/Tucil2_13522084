@@ -339,6 +339,10 @@ function InitializeCurves() {
   const rightSidebar = document.getElementById('right-sidebar');
   const leftSidebar = document.getElementById('left-sidebar');
   const sidebarClose = document.getElementById('sidebar-close');
+  if(window.innerWidth < 1024) { // tailwind lg
+    RightSidebarClose(sidebarClose, rightSidebar);
+    LeftSidebarClose(sidebarClose, leftSidebar);
+  }
   sidebarClose.addEventListener('click', (e) => {
     RightSidebarClose(sidebarClose, rightSidebar);
     LeftSidebarClose(sidebarClose, leftSidebar);
