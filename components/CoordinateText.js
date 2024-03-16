@@ -43,4 +43,11 @@ export class CoordinateText extends BitmapText {
     this.name = name;
     this.setText(this.x, this.y);
   }
+
+  /**
+   * @param {number} fontSize 
+   */
+  resizeText(fontSize) {
+    this.style.fontSize = fontSize;
+  }
 }

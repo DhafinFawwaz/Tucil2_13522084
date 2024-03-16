@@ -7,10 +7,9 @@ import BezierCurve from "./beziercurve/BezierCurve";
 import setTimeTaken from "./components/TimeTaken";
 import getIteration from "./components/IterationInput";
 import SyncablePoint from "./beziercurve/SyncablePoint";
-import BezierCurveOld from "./beziercurve/BezierCurveOld";
 import { CoordinateText } from "./components/CoordinateText";
 import { BezierCurveAnimator } from "./beziercurve/BezierCurveAnimator";
-import { randomRange } from "./beziercurve/math";
+import { randomRange } from "./beziercurve/Math";
 import { SidebarOpen, LeftSidebarClose, RightSidebarClose } from "./components/Sidebar";
 import { AlgorithmOption } from "./components/AlgorithmOption";
 import BackgroundGraphic from "./components/BackgroundGraphic";
@@ -54,10 +53,10 @@ stepsGraphic.interactive = false;
 stepsGraphic.hitArea = new Rectangle(0,0,0,0)
 
 /** @type {SyncablePoint[]} List of step points */ 
-const stepPoints = [];
+let stepPoints = [];
 
 /** @type {SyncablePoint[]} List of step lines */ 
-const stepLines = [];
+let stepLines = [];
 
 /** ====================================================================== **/
 
@@ -100,18 +99,21 @@ function redrawInputLines() {
 /** Redraw line results*/
 /** @type {CoordinateText[]} */
 const resultCoordinateTexts = [];
+/** @type {Graphics[]} */
+const resultCoordinatePoints = [];
 function redrawLineResult(){
   lineResultGraphic.clear();
   bezierCurve.refresh(p => {
     lineResultGraphic.moveTo(p.point1.x, p.point1.y).lineTo(p.point2.x, p.point2.y)
-      .fill(Data.slate50).stroke({ width: Data.lineWidth, color: Data.slate50 });
+      .fill(Data.yellow400).stroke({ width: Data.lineWidth, color: Data.yellow400 });
   });
 
   // Handle the result coordinate checkbox
   if(showResultCoordinate && resultCoordinateTexts.length !== bezierCurve.syncablePointResult.length-1) {
     while(resultCoordinateTexts.length < bezierCurve.syncablePointResult.length-1) {
       const coordinateText = new CoordinateText();
-      const circleGraphic = new Graphics(DragablePoint.graphicContext);
+      const circleGraphic = new Graphics(DragablePoint.graphicContextYellow);
+      resultCoordinatePoints.push(circleGraphic);
       circleGraphic.x = -Data.coordinateTextOffset;
       circleGraphic.y = -Data.coordinateTextOffset;
       coordinateText.addChild(circleGraphic);
@@ -120,6 +122,7 @@ function redrawLineResult(){
     }
     while(resultCoordinateTexts.length > bezierCurve.syncablePointResult.length-1) {
       const p = resultCoordinateTexts.pop();
+      resultCoordinatePoints.pop();
       graphicContainer.removeChild(p);
     }
     // Rename
@@ -229,7 +232,10 @@ function addInput(defaultX, defaultY) {
     inputY.value = y;
   });
   highestId++;
-  inputListParent.appendChild(newInput.content)
+  inputListParent.appendChild(newInput.content);
+  if(visualizationState !== 0) {
+    InitializeCurves();
+  }
 }
 
 /** Solve the Bezier Curve and draw to Canvas */
@@ -314,8 +320,9 @@ function InitializeCurves() {
 (async () =>
 {
   // await app.init({ background: Data.slate950, width:canvasWidth, height: canvasheight });
-  await app.init({ background: Data.slate950, resizeTo: window, antialias: true});
+  await app.init({ background: Data.slate950, resizeTo: window});
   backgroundGraphic = new BackgroundGraphic(app);
+  addEventListener("resize", () => backgroundGraphic.refreshBackground());
   InitializeCurves();
   
   document.getElementById('add-point').addEventListener('click', () => addInput(randomRange(0, app.renderer.width-rightMargin), randomRange(0, app.renderer.height)));
@@ -361,19 +368,56 @@ function InitializeCurves() {
   // To make points dragable
   app.stage.eventMode = 'static';
   app.stage.hitArea = app.screen;
-  app.stage.on('pointerup', DragablePoint.onDragEnd);
-  app.stage.on('pointerupoutside', DragablePoint.onDragEnd);
 
   // zoom stage by wheel
+  let lastStagePos = new Point();
   addEventListener('wheel' , (e) => {
     if(!canZoom) return;
-    const mousePos = new Point(e.clientX, e.clientY);
-    const zoom = e.deltaY > 0 ? 0.9 : 1.1;
-    app.stage.scale.x *= zoom;
-    app.stage.scale.y *= zoom;
-    app.stage.position.x = mousePos.x - (mousePos.x - app.stage.position.x) * zoom;
-    app.stage.position.y = mousePos.y - (mousePos.y - app.stage.position.y) * zoom;
+    const zoom = e.deltaY > 0 ? 1.1 : 0.9;
+    app.renderer.resize(app.renderer.width * zoom, app.renderer.height * zoom);
+    app.stage.position.y = app.renderer.height / app.renderer.resolution;
+    app.stage.position.x = 0;
+    backgroundGraphic.refreshBackground();
+
+    // Resize data bazed on zoom
+    Data.lineWidth *= zoom;
+    Data.pointRadius *= zoom;
+    Data.pointFontSize *= zoom;
+    DragablePoint.resizeGraphicContext(Data.pointRadius);
+    backgroundGraphic.resizeAllText(Data.pointFontSize);
+    inputPoints.forEach(p => p.updateContext());
+    resultCoordinatePoints.forEach(p => p.context = DragablePoint.graphicContextWhite);
+    inputCoordinateTexts.forEach(p => p.resizeText(Data.pointFontSize));
   });
+
+
+
+  
+  // Drag stage with mouse
+  let isDragging = false;
+  app.stage.on('pointerup', () => {
+    DragablePoint.onDragEnd();
+    isDragging = false;
+  });
+  app.stage.on('pointerupoutside', () => {
+    DragablePoint.onDragEnd();
+    isDragging = false;
+  });
+  app.stage.on('pointerdown', (e) => {
+    isDragging = true;
+    lastStagePos = e.global.clone();
+  });
+  app.stage.on('pointermove', (e) => {
+    if(DragablePoint.currentTarget) return; // if dragging point, don't drag stage
+    if(isDragging) {
+      const newPos = e.global.clone();
+      app.stage.position.x += newPos.x - lastStagePos.x;
+      app.stage.position.y += newPos.y - lastStagePos.y;
+      lastStagePos = newPos;
+    }
+  });
+
+
 
   // To make the canvas full screen
   app.canvas.style.position = 'fixed';

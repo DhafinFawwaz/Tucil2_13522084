@@ -5,7 +5,16 @@ import { app } from '../main.js';
 
 export class DragablePoint extends Graphics {
 
-  static graphicContext = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.slate50).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.slate50);
+  static graphicContextWhite = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.slate50).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.slate50);
+  static graphicContextYellow = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.yellow400).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.yellow400);
+  
+  /**
+   * @param {number} radius 
+   */
+  static resizeGraphicContext(radius) {
+    DragablePoint.graphicContextWhite = new GraphicsContext().circle(0, 0, radius).fill(Data.slate50).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.slate50);
+    DragablePoint.graphicContextWhite = new GraphicsContext().circle(0, 0, radius).fill(Data.yellow400).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.yellow400);
+  }
 
   /**
    * @param {number} x x position
@@ -15,7 +24,7 @@ export class DragablePoint extends Graphics {
    */
   constructor(x, y) {
     super();
-    this.context = DragablePoint.graphicContext;
+    this.context = DragablePoint.graphicContextWhite;
     this.interactive = false;
     this.hitArea = new Rectangle(0,0,0,0);
        
@@ -111,6 +120,11 @@ export class DragablePoint extends Graphics {
       DragablePoint.currentTarget.app.stage.off('pointermove', this.onDragMove);
       DragablePoint.currentTarget = null;
     }
+  }
+
+  updateContext() {
+    this.clear();
+    this.context = DragablePoint.graphicContextWhite;
   }
 
 }

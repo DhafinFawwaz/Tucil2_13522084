@@ -1,7 +1,6 @@
 import { Application, Container, Point } from "pixi.js";
 import { DragablePoint } from "../components/DragablePoint";
 import { LineFollow } from "../components/LineFollow";
-import Colors from "../config/color.json";
 import Data from "../config/data.json";
 import CenterPoint from "./CenterPoint";
 import LerpPoint from "./LerpPoint";

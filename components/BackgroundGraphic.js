@@ -11,10 +11,16 @@ export default class BackgroundGraphic extends Graphics {
     super();
     this.app = app;
     this.range = 50;
-    const width = app.screen.width;
-    const height = app.screen.height;
+    this.refreshBackground();
+  }
+
+  /** Draw the background */
+  refreshBackground() {
+    const width = this.app.screen.width;
+    const height = this.app.screen.height;
 
     this.clear();
+    this.removeAllText();
     for(let i = 0; i < width; i += this.range) {
       this.moveTo(i, 0);
       this.lineTo(i, height);
@@ -50,5 +56,20 @@ export default class BackgroundGraphic extends Graphics {
     });
     text.scale.y = -1;
     return text;
+  }
+
+  /** Remove all input coordinate text */
+  removeAllText() {
+    this.removeChildren();
+  }
+
+  /**
+   * 
+   * @param {number} fontSize 
+   */
+  resizeAllText(fontSize) {
+    this.children.forEach((child) => {
+      child.style.fontSize = fontSize;
+    });
   }
 }

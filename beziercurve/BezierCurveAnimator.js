@@ -1,5 +1,5 @@
 import { Graphics, Ticker } from "pixi.js";
-import { lerp, easeOutQuart, saturate, easeOutBackCubic } from "./math";
+import { lerp, easeOutQuart, saturate, easeOutBackCubic } from "./Math";
 import Data from "../config/data.json";
 import SyncablePoint from "./SyncablePoint";
 

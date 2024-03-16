@@ -1,5 +1,6 @@
 import { Graphics } from "pixi.js";
 import { DragablePoint } from "./DragablePoint";
+import Data from "../config/data.json"
 
 
 export class LineFollow extends Graphics {
@@ -12,7 +13,7 @@ export class LineFollow extends Graphics {
     this.moveTo(this.p1.x, this.p1.y);
     this.lineTo(this.p2.x, this.p2.y);
     this.fill(this.color);
-    this.stroke({ width: 3, color: this.color });
+    this.stroke({ width: Data.lineWidth, color: this.color });
   }
 
   /**

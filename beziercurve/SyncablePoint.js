@@ -1,5 +1,5 @@
 import { Point } from "pixi.js";
-import { lerp } from "./math";
+import { lerp } from "./Math";
 
 /**
  * Contain position and reference to both points. Call sync() to update the position of this point to be in the center of both points.

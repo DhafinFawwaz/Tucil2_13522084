@@ -1,5 +1,5 @@
 import { Point } from "pixi.js";
-import { lerp } from "./math";
+import { lerp } from "./Math";
 import SyncablePoint from "./SyncablePoint";
 
 /**
