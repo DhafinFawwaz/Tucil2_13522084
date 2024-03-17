@@ -129,8 +129,8 @@ export class DragablePoint extends Graphics {
       const mouseY = event.y;
 
       // This is some epic meth. Proud of this 🙂🙂🙂
-      const newX = (mouseX/zoom + left);
-      const newY = (mouseY/zoom + top);
+      const newX = mouseX/zoom + left;
+      const newY = mouseY/zoom + top;
 
       DragablePoint.currentTarget.setPosition(newX, newY);
     }
