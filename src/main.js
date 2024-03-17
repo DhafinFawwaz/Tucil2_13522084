@@ -15,6 +15,7 @@ import { AlgorithmOption } from "./components/AlgorithmOption";
 import BackgroundGraphic from "./components/BackgroundGraphic";
 import { Viewport } from "pixi-viewport";
 import { drawLineResult, drawLineStep, drawPointResult, drawPointStep } from "./components/Drawer";
+import { CloseDialog, OpenDialog } from "./components/Dialog";
 
 let algorithmId = 0; // 0: divide and conquer, 1: brute force
 
@@ -26,7 +27,7 @@ const sidebarWidth = Data.leftMargin; // width of the sidebar
 
 /** @type {Viewport} Container for graphics */ 
 const viewport = new Viewport({
-  screenWidth: window.innerWidth,
+  screenWidth: window.innerWidth - sidebarWidth,
   screenHeight: window.innerHeight,
   worldWidth: 1000,
   worldHeight: 1000,
@@ -34,6 +35,21 @@ const viewport = new Viewport({
 })
 viewport.moveCenter(0,0);
 viewport.drag().pinch().wheel().decelerate({friction: 0.85});
+
+// stop dragging outside of the world bounds
+viewport.addEventListener('moved', (e) => {
+  const widthDiv2 = viewport.screenWidthInWorldPixels/2;
+  const heightDiv2 = viewport.screenHeightInWorldPixels/2;
+  const x = viewport.center.x;
+  const y = viewport.center.y;
+  let newX = x;
+  let newY = y;
+  if(x < -widthDiv2) newX = -widthDiv2;
+  if(x > widthDiv2) newX = widthDiv2;
+  if(y < -heightDiv2) newY = -heightDiv2;
+  if(y > heightDiv2) newY = heightDiv2;
+  viewport.moveCenter(newX, newY);
+})
 
 
 /** To tell when to redraw the curve */
@@ -232,7 +248,10 @@ function addInput(defaultX, defaultY) {
 
 /** Solve the Bezier Curve and draw to Canvas */
 function visualizeCurve() {
-  if(inputPoints.length < 3) return alert("Please add at least 3 points");
+  if(inputPoints.length < 3) {
+    OpenDialog("Illegal Input", "Please add at least 3 points. It's impossible to draw a curve with less than 3 points.")
+    return;
+  }
 
   if(visualizationState !== 0) InitializeCurves(); 
   visualizationState = 1;
@@ -360,6 +379,7 @@ function InitializeCurves() {
   document.getElementById('result-coordinate').addEventListener('change', toggleResultCoordinate);
   document.getElementById('input-lines').addEventListener('change', toggleInputLines);
 
+
   addInput(-200, 200);
   addInput(-100, -200);
   addInput( 100, -200);
@@ -379,6 +399,11 @@ function InitializeCurves() {
     Data.pointRadius = 10/zoom;
     backgroundGraphic.zoomRescale(zoom);
     resultCoordinateTexts.forEach(p => p.zoomRescale(zoom));
+  });
+
+  // on dragging
+  viewport.on('moved', (e) => {
+    backgroundGraphic.updateTextAnchor(e.viewport.center);
   });
   
 

@@ -48,17 +48,3 @@ export function saturate(x) {
 export function randomRange(min, max) {
   return Math.random() * (max - min) + min;
 }
-
-
-/**
- * round value to step. round(1013, 50) => 1000, round(923, 50) => 900, round(927, 50) => 950
- * @param {number} value 
- * @param {number} step 
- */
-export function roundTo(value, step) {
-  return Math.round(value / step) * step;
-}
-
-export function floorTo(value, step) {
-  return Math.floor(value / step) * step;
-}

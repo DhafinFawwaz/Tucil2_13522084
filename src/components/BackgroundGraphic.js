@@ -1,6 +1,5 @@
-import { Application, Container, Graphics, Text } from "pixi.js";
+import { Graphics, Point, Text } from "pixi.js";
 import Data from "../config/data.json"
-import { roundTo } from "../beziercurve/Math";
 import { Viewport } from "pixi-viewport";
 
 // Draw coordinate system
@@ -20,6 +19,7 @@ export default class BackgroundGraphic extends Graphics {
     this.currentZoom = 1;
     this.lineWidth = BackgroundGraphic.initialLineWidth;
     this.mainLineWidth = BackgroundGraphic.initialMainLineWidth;
+    this.textAnchor = new Point(0, 1);
     this.refresh();
   }
 
@@ -27,6 +27,7 @@ export default class BackgroundGraphic extends Graphics {
   refresh() {
     const width = this.viewport.screenWidthInWorldPixels;
     const height = this.viewport.screenHeightInWorldPixels;
+    const length = Math.max(width, height);
 
     const rangeWidth = Math.max(this.getRoundedRange(BackgroundGraphic.initialRangeWidth/this.viewport.scale.x * 100), 1);
 
@@ -34,14 +35,14 @@ export default class BackgroundGraphic extends Graphics {
 
     // Absis and ordinat line
     this.lineStyle({width: this.mainLineWidth, color: Data.slate700})
-      .moveTo(-width, 0).lineTo(width, 0)
-      .moveTo(0, -height).lineTo(0, height)
+      .moveTo(-length, 0).lineTo(length, 0)
+      .moveTo(0, -length).lineTo(0, length)
     
     this.lineStyle({width: this.lineWidth, color: Data.slate800})
 
     this.removeAllText();
 
-    this.drawLineAndCoordinateByRange(0, 0, Math.floor(rangeWidth), width, width);
+    this.drawLineAndCoordinateByRange(0, 0, Math.floor(rangeWidth), length, length);
   }
 
   /**
@@ -157,7 +158,7 @@ export default class BackgroundGraphic extends Graphics {
       fill: Data.slate50
     });
     text.resolution = 2;
-    text.anchor.set(0, 0);
+    text.anchor.set(this.textAnchor.x, this.textAnchor.y);
     return text;
   }
 
@@ -176,6 +177,27 @@ export default class BackgroundGraphic extends Graphics {
     this.mainLineWidth = BackgroundGraphic.initialMainLineWidth / zoom;
     this.currentZoom = zoom;
     this.refresh();
+  }
+
+  /**
+   * @param {number} {x, y} center position 
+   */
+  updateTextAnchor({x, y}) {
+    if(x >= 0 && y >= 0) {
+      x = 0; y = 0;
+    } else if(x < 0 && y >= 0) {
+      x = 1; y = 0;
+    } else if(x < 0 && y < 0) {
+      x = 1; y = 1;
+    } else if(x >= 0 && y < 0) {
+      x = 0; y = 1;
+    }
+    if(this.textAnchor.x !== x || this.textAnchor.y !== y) {
+      this.textAnchor.set(x, y);
+      this.children.forEach(child => {
+        child.anchor.set(x, y);
+      });
+    }
   }
 
 }
