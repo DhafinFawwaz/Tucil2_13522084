@@ -4,19 +4,11 @@ import Event from '../event/Event.js';
 import Data from "../config/data.json"
 import { app } from '../main.js';
 import { Viewport } from 'pixi-viewport';
+import SyncablePoint from '../beziercurve/SyncablePoint.js';
 
 export class DragablePoint extends Graphics {
 
-  // static graphicContextWhite = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.slate50).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.slate50);
-  // static graphicContextYellow = new GraphicsContext().circle(0, 0, Data.pointRadius).fill(Data.yellow400).circle(0, 0, Data.pointRadius*0.80).fill(Data.slate950).circle(0, 0, Data.pointRadius*0.40).fill(Data.yellow400);
-  
-  /**
-   * @param {number} radius 
-   */
-  static resizeGraphicContext(radius) {
-    // DragablePoint.graphicContextWhite = new GraphicsContext().circle(0, 0, radius).fill(Data.slate50).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.slate50);
-    // DragablePoint.graphicContextYellow = new GraphicsContext().circle(0, 0, radius).fill(Data.yellow400).circle(0, 0, radius*0.80).fill(Data.slate950).circle(0, 0, radius*0.40).fill(Data.yellow400);
-  }
+  static pointRadius = 10;
 
   /**
    * @param {number} x x position
@@ -26,8 +18,6 @@ export class DragablePoint extends Graphics {
    */
   constructor(x, y) {
     super();
-    // this.context = DragablePoint.graphicContextWhite;
-    this.interactive = false;
     this.hitArea = new Rectangle(0,0,0,0);
        
     this.onMove = new Event(this);
@@ -37,9 +27,9 @@ export class DragablePoint extends Graphics {
 
   draw() {
     this.clear();
-    this.beginFill(Data.slate50).drawCircle(0, 0, Data.pointRadius)
-      .beginFill(Data.slate950).drawCircle(0, 0, Data.pointRadius*0.80)
-      .beginFill(Data.slate50).drawCircle(0, 0, Data.pointRadius*0.40)
+    this.beginFill(Data.slate50).drawCircle(0, 0, DragablePoint.pointRadius)
+      .beginFill(Data.slate950).drawCircle(0, 0, DragablePoint.pointRadius*0.80)
+      .beginFill(Data.slate50).drawCircle(0, 0, DragablePoint.pointRadius*0.40)
   }
 
   /**
@@ -97,6 +87,19 @@ export class DragablePoint extends Graphics {
     this.on('pointerup', () => this.onDragEnd());
   }
 
+
+  /**
+   * Rescale based on zoom
+   * @param {number} zoom zoom factor
+   */
+  zoomRescale(zoom) {
+    const newZoom = 1/zoom;
+    this.scale.x = newZoom;
+    this.scale.y = newZoom;
+  }
+
+
+
   // Have to resort to static variable because for some reason, the 'this' context is lost in the onDragMove function
   /** @type {DragablePoint} */
   static currentTarget = null;
@@ -113,13 +116,21 @@ export class DragablePoint extends Graphics {
   }
   static onDragMove(event){
     if (DragablePoint.currentTarget){
-      // Handle zoom on mouse wheel
-      const zoom = DragablePoint.currentTarget.viewport.scale.x;
-      const mouseX = event.x + DragablePoint.currentTarget.viewport.left;
-      const mouseY = event.y + DragablePoint.currentTarget.viewport.top;
 
-      const newX = (mouseX) / 1;
-      const newY = (mouseY) / 1;
+      // Value will decrease when zoom out
+      const zoom = DragablePoint.currentTarget.viewport.scale.x;
+
+      // Coordinate of whatever the coordinate of the top left corner of the viewport currently is, even when zooming.
+      const left = DragablePoint.currentTarget.viewport.left;
+      const top = DragablePoint.currentTarget.viewport.top;
+      
+      // Coordinate of the mouse on the screen, value won't change when zooming
+      const mouseX = event.x;
+      const mouseY = event.y;
+
+      // This is some epic meth. Proud of this 🙂🙂🙂
+      const newX = (mouseX/zoom + left);
+      const newY = (mouseY/zoom + top);
 
       DragablePoint.currentTarget.setPosition(newX, newY);
     }
@@ -132,11 +143,6 @@ export class DragablePoint extends Graphics {
       })
       DragablePoint.currentTarget = null;
     }
-  }
-
-  updateContext() {
-    // this.clear();
-    // this.context = DragablePoint.graphicContextWhite;
   }
 
 }

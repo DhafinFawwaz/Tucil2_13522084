@@ -1,7 +1,6 @@
 import { BitmapText, Text } from "pixi.js";
 import { DragablePoint } from "./DragablePoint";
 import Data from "../config/data.json";
-import { getHalfAppHeight } from "../main";
 
 
 export class CoordinateText extends Text {
@@ -11,6 +10,7 @@ export class CoordinateText extends Text {
       fill: Data.slate50,
     });
     this.label = "";
+    this.resolution = 2;
   }
 
   /**
@@ -35,8 +35,7 @@ export class CoordinateText extends Text {
    * @param {number} y 
    */
   setText(x, y){
-    x -= getHalfAppHeight();
-    y -= getHalfAppHeight();
+    y *= -1; // Flip y
     this.text = `${this.label}(${x.toFixed(2)}, ${y.toFixed(2)})`;
   }
 
@@ -44,10 +43,19 @@ export class CoordinateText extends Text {
     this.label = name;
   }
 
+  /** set color to yellow */
+  setYellow() {
+    this.style.fill = Data.yellow400;
+  }
+
+
   /**
-   * @param {number} fontSize 
+   * Rescale based on zoom
+   * @param {number} zoom zoom factor
    */
-  resizeText(fontSize) {
-    this.style.fontSize = fontSize;
+  zoomRescale(zoom) {
+    const newZoom = 1 / zoom;
+    this.scale.x = newZoom;
+    this.scale.y = newZoom;
   }
 }

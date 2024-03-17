@@ -2,6 +2,7 @@ import { Graphics, Ticker } from "pixi.js";
 import { lerp, easeOutQuart, saturate, easeOutBackCubic } from "./Math";
 import Data from "../config/data.json";
 import SyncablePoint from "./SyncablePoint";
+import { DragablePoint } from "../components/DragablePoint";
 
 class animatable {
   /**
@@ -17,13 +18,16 @@ class animatable {
 
 export class BezierCurveAnimator{
 
-  constructor(graphics, stepDuration) {
+  constructor(lineGraphics, circleGraphics, stepDuration) {
     /** @type {animatable[]} */
     this.lineAnimationList = [];
     /** @type {animatable[]} */
     this.pointAnimationList = [];
+    
     /** @type {Graphics} */
-    this.graphics = graphics;
+    this.lineGraphics = lineGraphics;
+    this.circleGraphics = circleGraphics;
+
     this.stepDuration = stepDuration;
 
     this.removeAnimationWhenFinished = true;
@@ -34,7 +38,8 @@ export class BezierCurveAnimator{
    * @param {Ticker} ticker
    */
   update(ticker) {
-    this.graphics.clear();
+    this.lineGraphics.clear();
+    this.circleGraphics.clear();
     this.continueAnimation(ticker);
     if(this.removeAnimationWhenFinished)
       this.removeFinishedAnimation();    
@@ -50,11 +55,12 @@ export class BezierCurveAnimator{
       this.drawLineProgress(p.syncablePoint, easeOutQuart(saturate(p.progress))); // saturate to prevent overshoot
     });
 
-    this.pointAnimationList.forEach(p => {
+    this.pointAnimationList.forEach(p=> {
       p.syncablePoint.sync();
       p.progress += ticker.elapsedMS/1000/this.stepDuration;
       this.drawPointProgress(p.syncablePoint, easeOutBackCubic(saturate(p.progress)));
     });
+
   }
 
   /** Remove Finished Animation */
@@ -80,8 +86,9 @@ export class BezierCurveAnimator{
   drawLineProgress(p, progress) {
     const from = p.point1;
     const to = p.getProgressPoint(progress);
-    this.graphics.moveTo(from.x, from.y).lineTo(to.x, to.y)
-      .fill(Data.slate50).stroke({ width: Data.lineWidth, color: Data.slate50 });
+    this.lineGraphics
+      .beginFill(Data.slate50).lineStyle({ width: Data.lineWidth, color: Data.slate50 })
+      .moveTo(from.x, from.y).lineTo(to.x, to.y);
   }
 
   /**
@@ -90,7 +97,9 @@ export class BezierCurveAnimator{
    * @param {number} progress 
    */
   drawPointProgress(p, progress) {
-    this.graphics.circle(p.x, p.y, Data.pointRadius*progress).fill(Data.slate50).circle(p.x, p.y, Data.pointRadius*0.80*progress).fill(Data.slate950).circle(p.x, p.y, Data.pointRadius*0.40*progress).fill(Data.slate50);
+    this.circleGraphics.beginFill(Data.slate50).drawCircle(p.x, p.y, Data.pointRadius*progress)
+      .beginFill(Data.slate950).drawCircle(p.x, p.y, Data.pointRadius*0.80*progress)
+      .beginFill(Data.slate50).drawCircle(p.x, p.y, Data.pointRadius*0.40*progress);
   }
 
 

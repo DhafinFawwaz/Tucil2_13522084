@@ -1,6 +1,6 @@
 import "./style.css"
 import { PointInput } from './components/PointInput.js'
-import { Application, Graphics, Container, Rectangle, Point, Sprite, Texture } from 'pixi.js';
+import { Application, Graphics, Rectangle, Point, Ticker } from 'pixi.js';
 import Data from "./config/data.json"
 import { DragablePoint } from "./components/DragablePoint.js";
 import BezierCurve from "./beziercurve/BezierCurve";
@@ -9,33 +9,31 @@ import getIteration from "./components/IterationInput";
 import SyncablePoint from "./beziercurve/SyncablePoint";
 import { CoordinateText } from "./components/CoordinateText";
 import { BezierCurveAnimator } from "./beziercurve/BezierCurveAnimator";
-import { floorTo, randomRange, roundTo } from "./beziercurve/Math.js";
+import { randomRange } from "./beziercurve/Math.js";
 import { SidebarOpen, LeftSidebarClose, RightSidebarClose } from "./components/Sidebar";
 import { AlgorithmOption } from "./components/AlgorithmOption";
 import BackgroundGraphic from "./components/BackgroundGraphic";
 import { Viewport } from "pixi-viewport";
+import { drawLineResult, drawLineStep, drawPointResult, drawPointStep } from "./components/Drawer";
 
 let algorithmId = 0; // 0: divide and conquer, 1: brute force
 
 export const app = new Application({
   resizeTo: window,
   backgroundColor: Data.slate950
-}); // Imported by DraggablePoint for dragging points
-const rightMargin = Data.leftMargin; // width of the sidebar
+});
+const sidebarWidth = Data.leftMargin; // width of the sidebar
 
 /** @type {Viewport} Container for graphics */ 
-const graphicContainer = new Viewport({
+const viewport = new Viewport({
   screenWidth: window.innerWidth,
   screenHeight: window.innerHeight,
   worldWidth: 1000,
   worldHeight: 1000,
   events: app.renderer.events 
 })
-graphicContainer.animate({
-  time: 0,
-  position: new Point(0,0),
-})
-graphicContainer.drag().pinch().wheel().decelerate({friction: 0.85});
+viewport.moveCenter(0,0);
+viewport.drag().pinch().wheel().decelerate({friction: 0.85});
 
 
 /** To tell when to redraw the curve */
@@ -56,17 +54,19 @@ const inputCoordinateTexts = [];
 /** @type {Graphics} List of input lines */ 
 const inputLinesGraphic = new Graphics();
 
-/** @type {Graphics} Graphic that draws the input lines */ 
+/** @type {Graphics} Graphic that draws the result lines */ 
 const lineResultGraphic = new Graphics();
-// lineResultGraphic.interactive = false;
-// lineResultGraphic.hitArea = new Rectangle(0,0,0,0)
+
+/** @type {Graphics} Graphic that draws the result lines */ 
+const pointResultGraphic = new Graphics();
 
 /** ====================================================================== **/
 
-/** @type {Graphics} unanimated steps graphics */ 
-const stepsGraphic = new Graphics();
-stepsGraphic.interactive = false;
-stepsGraphic.hitArea = new Rectangle(0,0,0,0)
+/** @type {Graphics} unanimated steps graphics for lines */ 
+const stepLinesGraphic = new Graphics();
+
+/** @type {Graphics} unanimated steps graphics for circles */ 
+const stepCirclesGraphic = new Graphics();
 
 /** @type {SyncablePoint[]} List of step points */ 
 let stepPoints = [];
@@ -84,10 +84,13 @@ let stepDelay = 0.15;
 const bezierCurve = new BezierCurve();
 
 /** @type {Graphics} animated steps graphics */ 
-const animatedStepsGraphic = new Graphics();
+const animatedStepLinesGraphic = new Graphics();
+
+/** @type {Graphics} animated steps graphics */ 
+const animatedStepCirclesGraphic = new Graphics();
 
 /** @type {BezierCurveAnimator} The curve animator */
-const bezierCurveAnimator = new BezierCurveAnimator(animatedStepsGraphic, stepDuration);
+const bezierCurveAnimator = new BezierCurveAnimator(animatedStepLinesGraphic, animatedStepCirclesGraphic, stepDuration);
 
 /** ====================================================================== **/
 
@@ -100,7 +103,6 @@ let backgroundGraphic;
 let dynamicUpdate = true;
 let showResultCoordinate = false;
 let showInputLines = true;
-let canZoom = true;
 
 /** ================================================ Redraws ================================================ **/
 /** sync the lines with the points */
@@ -115,86 +117,56 @@ function redrawInputLines() {
 /** Redraw line results*/
 /** @type {CoordinateText[]} */
 let resultCoordinateTexts = [];
-/** @type {Graphics[]} */
-let resultCoordinatePoints = [];
-function redrawLineResult(){
+function redrawPointAndLineResult(){
   lineResultGraphic.clear();
   bezierCurve.refresh(p => {
-    lineResultGraphic.beginFill(Data.yellow400).lineStyle({ width: Data.lineWidth, color: Data.yellow400 })
-      .moveTo(p.point1.x, p.point1.y).lineTo(p.point2.x, p.point2.y)
+    drawLineResult(p, lineResultGraphic);
   });
 
-  // Handle the result coordinate checkbox
-  if(showResultCoordinate && resultCoordinateTexts.length !== bezierCurve.syncablePointResult.length-1) {
+
+  if(showResultCoordinate) {
+    pointResultGraphic.clear();
     while(resultCoordinateTexts.length < bezierCurve.syncablePointResult.length-1) {
-      const coordinateText = new CoordinateText();
-      coordinateText.style.fill = Data.yellow400;
-      // const circleGraphic = new Graphics(DragablePoint.graphicContextYellow);
-      resultCoordinatePoints.push(circleGraphic);
-      circleGraphic.x = -Data.coordinateTextOffset;
-      circleGraphic.y = -Data.coordinateTextOffset;
-      coordinateText.addChild(circleGraphic);
-      resultCoordinateTexts.push(coordinateText);
-      graphicContainer.addChild(coordinateText);
+      const text = new CoordinateText();
+      text.setYellow();
+      resultCoordinateTexts.push(text);
+      viewport.addChild(text);
     }
     while(resultCoordinateTexts.length > bezierCurve.syncablePointResult.length-1) {
-      const p = resultCoordinateTexts.pop();
-      resultCoordinatePoints.pop();
-      graphicContainer.removeChild(p);
+      viewport.removeChild(resultCoordinateTexts.pop());
     }
-    // Rename
-    resultCoordinateTexts.forEach((el, i) => el.rename(`Q${i}`));
 
-  }
-  
-  if(!showResultCoordinate && resultCoordinateTexts.length > 0) {
-    resultCoordinateTexts.forEach(p => graphicContainer.removeChild(p));
-    resultCoordinateTexts = [];    
-  }
-  
-  if(showResultCoordinate  && resultCoordinateTexts.length === bezierCurve.syncablePointResult.length-1) {
-    for(let i = 0; i < resultCoordinateTexts.length; i++) { 
-      const p = bezierCurve.syncablePointResult[i];
-      resultCoordinateTexts[i].x = p.point2.x + Data.coordinateTextOffset;
-      resultCoordinateTexts[i].y = p.point2.y - Data.coordinateTextOffset;
-      resultCoordinateTexts[i].setText(p.point2.x, p.point2.y);
+    for(let i = 0; i < bezierCurve.syncablePointResult.length-1; i++) {
+      const p = bezierCurve.syncablePointResult[i].point2;
+      const text = resultCoordinateTexts[i];
+      const zoom = viewport.scale.x;
+      text.setText(p.x, p.y);
+      text.zoomRescale(zoom);
+      text.x = p.x + Data.coordinateTextOffsetX/zoom;
+      text.y = p.y - Data.coordinateTextOffsetY/zoom;
+      drawPointResult(p, pointResultGraphic);
     }
+  } else {
+    resultCoordinateTexts.forEach(p => viewport.removeChild(p));
+    resultCoordinateTexts = [];
   }
 }
 
 /** Redraw step line results */
-function redrawStepLineResult(){
-  stepsGraphic.clear();
+function redrawStepPointAndLineResult(){
+  stepLinesGraphic.clear();
   stepLines.forEach(p => {
     p.sync();
-    drawLineStep(p);
+    drawLineStep(p, stepLinesGraphic);
   });
+  stepCirclesGraphic.clear();
   stepPoints.forEach(p => {
     p.sync();
-    drawPointStep(p);
+    drawPointStep(p, stepCirclesGraphic);
   });
 }
 /** ================================================ Redraws ================================================ **/
 
-
-
-/** ================================================ Draw Animated Steps ================================================ **/
-/**
- * Redraw animated line results
- * @param {SyncablePoint} p The point to draw
- */
-function drawLineStep(p){
-  stepsGraphic.moveTo(p.point1.x, p.point1.y).lineTo(p.point2.x, p.point2.y)
-    .fill(Data.slate50).stroke({ width: Data.lineWidth, color: Data.slate50 });
-}
-/**
- * Redraw animated line results
- * @param {SyncablePoint} p The point that connected to 2 other points to draw
- */
-function drawPointStep(p){
-  stepsGraphic.circle(p.x, p.y, Data.pointRadius).fill(Data.slate50).circle(p.x, p.y, Data.pointRadius*0.80).fill(Data.slate950).circle(p.x, p.y, Data.pointRadius*0.40).fill(Data.slate50);
-}
-/** ================================================ Draw Animated Steps End ================================================ **/
 
 
 
@@ -208,19 +180,19 @@ function addInput(defaultX, defaultY) {
   const name = `P${highestId}`;
 
   const dragablePoint = new DragablePoint(defaultX, defaultY);
-  dragablePoint.setDragable(app, graphicContainer);
+  dragablePoint.setDragable(app, viewport);
   const coordinateText = new CoordinateText();
   coordinateText.attachToDraggablePoint(dragablePoint, Data.coordinateTextOffsetX, Data.coordinateTextOffsetY, name);
   
-  graphicContainer.addChild(dragablePoint);
+  viewport.addChild(dragablePoint);
   inputPoints.push(dragablePoint);
   inputCoordinateTexts.push(coordinateText);
   redrawInputLines();
 
-  const [newInput, inputX, inputY] = PointInput(name, defaultX - getHalfAppHeight(), defaultY - getHalfAppHeight(), 
+  const [newInput, inputX, inputY] = PointInput(name, defaultX, -defaultY, // Flip y
     (div) => { // onRemove
       highestId--;
-      graphicContainer.removeChild(dragablePoint);
+      viewport.removeChild(dragablePoint);
       inputPoints.splice(inputPoints.indexOf(dragablePoint), 1);
       inputCoordinateTexts.splice(inputCoordinateTexts.indexOf(coordinateText), 1);
       // rename the point names
@@ -241,15 +213,15 @@ function addInput(defaultX, defaultY) {
       }
 
   }, (newPos) => { // onPositionChange
-      // dragablePoint.setPosition(newPos.x + getHalfAppHeight(), newPos.y + getHalfAppHeight());
-      dragablePoint.x = newPos.x + getHalfAppHeight();
-      dragablePoint.y = newPos.y + getHalfAppHeight();
-      coordinateText.setText(newPos.x + getHalfAppHeight(), newPos.y + getHalfAppHeight());
+      // dragablePoint.setPosition(newPos.x, newPos.y);
+      dragablePoint.x = newPos.x;
+      dragablePoint.y = newPos.y;
+      coordinateText.setText(newPos.x, newPos.y);
   });
   
   dragablePoint.addOnMoveListener((sender, {x, y}) => {
-    inputX.value = x - getHalfAppHeight();
-    inputY.value = y - getHalfAppHeight();
+    inputX.value = x;
+    inputY.value = -y; // Flip y
   });
   highestId++;
   inputListParent.appendChild(newInput.content);
@@ -275,7 +247,7 @@ function visualizeCurve() {
   const timeTaken = (performance.now() - startTime);
   setTimeTaken(timeTaken.toFixed(2));
   logResult(bezierCurve, timeTaken);
-  redrawLineResult();
+  redrawPointAndLineResult();
 }
 
 /**
@@ -283,11 +255,9 @@ function visualizeCurve() {
  * @param {number} timeTaken 
  */
 function logResult(bezierCurve, timeTaken) {
-  const h = getHalfAppHeight();
-  let points = bezierCurve.syncablePointResult.map(p => [p.point2.x-h, p.point2.y-h]);
-  points.unshift([bezierCurve.syncablePointResult[0].point1.x-h, bezierCurve.syncablePointResult[0].point1.y-h]);
-  console.log(`Time taken: ${timeTaken} ms`);
-  console.log("Points: ", points);
+  let points = bezierCurve.syncablePointResult.map(p => [p.point2.x, -p.point2.y]); // Flip y
+  points.unshift([bezierCurve.syncablePointResult[0].point1.x, -bezierCurve.syncablePointResult[0].point1.y]); // Flip y
+  console.log(`Time taken: ${timeTaken} ms`, "\n\nPoints: ", points);
 }
 
 /** Solve the Bezier Curve and draw with step by step animation */
@@ -324,9 +294,6 @@ function toggleInputLines(e) {
   showInputLines = e.target.checked;
   inputLinesGraphic.visible = showInputLines;
 }
-function toggleZoomScrollWheel(e) {
-  canZoom = e.target.checked;
-}
 function toggleDynamicUpdate(e) {
   dynamicUpdate = e.target.checked;
 }
@@ -337,15 +304,18 @@ function toggleDynamicUpdate(e) {
 /** Clear all curves */
 function InitializeCurves() {
   visualizationState = 0;
-  graphicContainer.removeChildren();
-  graphicContainer.addChild(backgroundGraphic, lineResultGraphic, stepsGraphic, animatedStepsGraphic, inputLinesGraphic);
-  inputPoints.forEach(p => graphicContainer.addChild(p));
+  viewport.removeChildren();
+  viewport.addChild(backgroundGraphic, lineResultGraphic, inputLinesGraphic, stepLinesGraphic, animatedStepLinesGraphic, stepCirclesGraphic, animatedStepCirclesGraphic, pointResultGraphic);
+  inputPoints.forEach(p => viewport.addChild(p));
   redrawInputLines();
   lineResultGraphic.clear();
   stepPoints = [];
   stepLines = [];
-  stepsGraphic.clear();
-  animatedStepsGraphic.clear();
+  stepLinesGraphic.clear();
+  stepCirclesGraphic.clear();
+  animatedStepLinesGraphic.clear();
+  animatedStepCirclesGraphic.clear();
+  pointResultGraphic.clear();
   bezierCurve.clear();
   resultCoordinateTexts = [];    
 }
@@ -354,11 +324,10 @@ function InitializeCurves() {
 
 (async () =>
 {
-  backgroundGraphic = new BackgroundGraphic(graphicContainer);
-  addEventListener("resize", () => backgroundGraphic.refreshBackground());
+  backgroundGraphic = new BackgroundGraphic(viewport);
   InitializeCurves();
   
-  document.getElementById('add-point').addEventListener('click', () => addInput(randomRange(0, app.renderer.width-rightMargin), randomRange(0, app.renderer.height)));
+  document.getElementById('add-point').addEventListener('click', () => addInput(randomRange(viewport.left + sidebarWidth, viewport.right - sidebarWidth), randomRange(viewport.bottom, viewport.top)));
   document.getElementById('visualize-curve').addEventListener('click', visualizeCurve);
   document.getElementById('show-steps').addEventListener('click', showStepsAnimated);
   document.getElementById('clear-curve').addEventListener('click', InitializeCurves);
@@ -390,7 +359,6 @@ function InitializeCurves() {
   document.getElementById('dynamic-update').addEventListener('change', toggleDynamicUpdate);
   document.getElementById('result-coordinate').addEventListener('change', toggleResultCoordinate);
   document.getElementById('input-lines').addEventListener('change', toggleInputLines);
-  document.getElementById('zoom-scroll-wheel').addEventListener('change', toggleZoomScrollWheel);
 
   addInput(-200, 200);
   addInput(-100, -200);
@@ -400,7 +368,19 @@ function InitializeCurves() {
   // app.stage.position.y = app.renderer.height / app.renderer.resolution;
   // app.stage.scale.y = -1;
 
-  app.stage.addChild(graphicContainer);
+  app.stage.addChild(viewport);
+  
+
+  // wheel happens is before viewport.scale.x is updated, so we use zoomed
+  viewport.on('zoomed', (e) => {
+    const zoom = viewport.scale.x
+    inputPoints.forEach(p => p.zoomRescale(zoom));
+    Data.lineWidth = 3/zoom;
+    Data.pointRadius = 10/zoom;
+    backgroundGraphic.zoomRescale(zoom);
+    resultCoordinateTexts.forEach(p => p.zoomRescale(zoom));
+  });
+  
 
 
   // To make the canvas full screen
@@ -411,14 +391,14 @@ function InitializeCurves() {
   document.body.appendChild(app.view);
 
   // Using this loop is faster than subscribing to mouse move event
-  app.ticker.add((ticker) => {
-
+  const ticker = Ticker.shared;
+  ticker.add((dt) => {
     bezierCurveAnimator.update(ticker);
     if(!dynamicUpdate) return;
 
     redrawInputLines();
-    if(visualizationState === 1) redrawLineResult();
-    else if(visualizationState === 2) redrawStepLineResult();
+    if(visualizationState === 1) redrawPointAndLineResult();
+    else if(visualizationState === 2) redrawStepPointAndLineResult();
 
   });
 
@@ -426,21 +406,3 @@ function InitializeCurves() {
 
 /** ================================================ Initialization End ================================================ **/
 
-
-// Below is for handling negative. Bad way of doing it because it feels like singleton function, but i wont touch it anymore so i hope its fine.
-
-/**
- * Handle negative. change this to return 0 if we dont want negative coordinate anymore
- */
-export function getHalfAppWidth() {
-  return roundTo(app.screen.width/2, 50);
-}
-
-/**
- * Handle negative. change this to return 0 if we dont want negative coordinate anymore
- */
-export function getHalfAppHeight() {
-  // return roundTo(app.screen.height/2, 50);
-  // return app.screen.height/2;
-  return 0;
-}
