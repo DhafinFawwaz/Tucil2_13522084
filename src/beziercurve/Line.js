@@ -3,11 +3,15 @@ import { lerp } from "./Math";
 import SyncablePoint from "./SyncablePoint";
 
 /**
- * Syncable to the center of two points
+ * Syncable to the center of two points, bassically just to hold the position of the center of two points.
  */
 export default class Line extends SyncablePoint {
 
-  
+  /**
+   * 
+   * @param {SyncablePoint} point1 
+   * @param {SyncablePoint} point2 
+   */
   constructor(point1, point2) {
     super(point1, point2);
     this.sync();

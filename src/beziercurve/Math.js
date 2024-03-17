@@ -53,14 +53,13 @@ export function randomRange(min, max) {
 
 /**
  * Optimized Combination formula: https://blog.plover.com/math/choose.html
- * @param {number} n 
- * @param {number} k 
+ * @param {number} n number of items
+ * @param {number} k number of items to take
  */
 export function combination(n, k) {
   let r = 1;
-  let d;
   if (k > n) return 0;
-  for (d = 1; d <= k; d++) {
+  for (let d = 1; d <= k; d++) {
     r *= n--;
     r /= d;
   }
