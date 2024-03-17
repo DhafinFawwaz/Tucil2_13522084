@@ -111,13 +111,13 @@
     <div id="dialog-background" class="fixed px-4 flex justify-center inset-0 bg-black bg-opacity-50 z-40 duration-200 opacity-100 visible">
 
       <div id="dialog" class="inset-0 flex justify-center items-center z-50 duration-200 ease-out-expo">
-        <div class="bg-slate-800 rounded-xl p-6 max-w-screen-sm">
+        <div class="bg-slate-800 rounded-xl p-4 md:p-6 max-w-screen-sm">
           <div class="flex justify-between">
 
             <div class="flex justify-between items-center w-8"></div>
-            <div id="dialog-title" class="text-2xl mt-1 font-extrabold self-center mx-4">Welcome 😊</div>
+            <div id="dialog-title" class="text-xl font-extrabold self-center mx-4">Welcome to Bezier Curve Generator! 😊</div>
             <div class="flex justify-end items-center">
-              <button id="dialog-close-button" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-xl duration-200 ease-out-expo">
+              <button id="dialog-close-button" class="bg-slate-700 hover:bg-slate-600 p-2 rounded-xl duration-200 ease-out-expo min-w-8">
                 <img src="/icon/close.svg" alt="" width="20" height="20" class="invert"/>
               </button>
             </div>
@@ -125,45 +125,45 @@
           </div>
           <div class="gap-4">
             <div id="dialog-content" class="my-2">
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Visualize Curve: Visualize Bezier Curve</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Show Steps: Animate the generating process of the iterations</div>
               </div>
-              <div class="flex gap-2">
-                <div>-</div> <div>Algorithm: Switch betweent the Divide & Conquer and Brute Force Algorithm</div>
+              <div class="flex gap-2 text-sm md:text-base">
+                <div>-</div> <div>Algorithm: Switch between algorithm. Brute Force Formulated is simple for loops but with complex math (combination, sum, power, etc.). Brute Force is for loops with simple math (lerp function).</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Dynamic Update: Auto calculate curve when dragging the points</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Result Coordinate: Show/Hide each position of the resuling points of the bezier curve</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Input Lines: Show/Hide lines connected from input to input</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Interactive Dragable points</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Scroll to zoom and drag with mouse to navigate the view</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Step Duration: duration of animation for each step</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Step Delay: Duration to wait before starting the next step. Try setting this to 0.01, really cool!</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Iterations: The bigger the iterations, the smoother the curve</div>
               </div>
-              <div class="flex gap-2">
+              <div class="flex gap-2 text-sm md:text-base">
                 <div>-</div> <div>Points: 3 points = Quadratic Curve, 4 points = Cubic Curve, etc.</div>
               </div>
             </div>
             <div class="flex w-full flex-row-reverse">
-              <button id="dialog-submit-button" type="button" class="group flex justify-center px-4 py-2 gap-1 bg-rose-600 rounded-xl font-bold text-slate-50 hover:bg-rose-500 hover:scale-105 duration-200 ease-out-expo ">
+              <button id="dialog-submit-button" type="button" class="group flex justify-center w-full sm:w-auto sm:px-8 py-2 gap-1 bg-rose-600 rounded-xl font-bold text-slate-50 hover:bg-rose-500 hover:scale-105 duration-200 ease-out-expo ">
                 OK
               </button>
             </div>
