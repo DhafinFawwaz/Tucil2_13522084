@@ -27,7 +27,7 @@ const sidebarWidth = Data.leftMargin; // width of the sidebar
 
 /** @type {Viewport} Container for graphics */ 
 const viewport = new Viewport({
-  screenWidth: window.innerWidth - sidebarWidth,
+  screenWidth: window.innerWidth,
   screenHeight: window.innerHeight,
   worldWidth: 1000,
   worldHeight: 1000,
