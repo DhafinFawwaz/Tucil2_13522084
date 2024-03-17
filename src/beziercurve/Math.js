@@ -48,3 +48,21 @@ export function saturate(x) {
 export function randomRange(min, max) {
   return Math.random() * (max - min) + min;
 }
+
+
+
+/**
+ * Optimized Combination formula: https://blog.plover.com/math/choose.html
+ * @param {number} n 
+ * @param {number} k 
+ */
+export function combination(n, k) {
+  let r = 1;
+  let d;
+  if (k > n) return 0;
+  for (d = 1; d <= k; d++) {
+    r *= n--;
+    r /= d;
+  }
+  return r;
+}

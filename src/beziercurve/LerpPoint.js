@@ -3,7 +3,7 @@ import { lerp } from "./Math";
 import SyncablePoint from "./SyncablePoint";
 
 /**
- * Syncable to the center of two points
+ * Syncable to a certain percentage of two points
  */
 export default class LerpPoint extends SyncablePoint {
 

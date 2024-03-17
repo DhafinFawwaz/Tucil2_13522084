@@ -3,6 +3,9 @@ This repository contains implementation of Bezier Curve using Divide & Conquer a
 
 > 🕹️ Live demo [_here_](https://beziercurvegenerator.vercel.app).
 
+## Made by
+- 13522084 - Dhafin Fawwaz Ikramullah
+
 
 ## ✨ Features
 - Visualize Bezier Curve

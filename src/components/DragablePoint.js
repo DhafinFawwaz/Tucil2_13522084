@@ -44,6 +44,8 @@ export class DragablePoint extends Graphics {
     }
   }
 
+  sync () {} // Javascript dont have interface so this is a hack
+
 
   /**
    * Make this point always follow the center of two other points

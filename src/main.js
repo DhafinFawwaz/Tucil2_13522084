@@ -75,6 +75,7 @@ const lineResultGraphic = new Graphics();
 
 /** @type {Graphics} Graphic that draws the result lines */ 
 const pointResultGraphic = new Graphics();
+pointResultGraphic.eventMode = 'none';
 
 /** ====================================================================== **/
 
@@ -135,36 +136,43 @@ function redrawInputLines() {
 let resultCoordinateTexts = [];
 function redrawPointAndLineResult(){
   lineResultGraphic.clear();
+  if(showResultCoordinate) pointResultGraphic.clear();
+
+  lineResultGraphic.lineStyle({ width: Data.lineWidth, color: Data.yellow400 })
+    .moveTo(inputPoints[0].x, inputPoints[0].y)
   bezierCurve.refresh(p => {
-    drawLineResult(p, lineResultGraphic);
+    lineResultGraphic.lineTo(p.x, p.y);
+
+    if(showResultCoordinate){
+      drawPointResult(p, pointResultGraphic);
+    };
   });
+  // lineResultGraphic.lineTo(inputPoints[inputPoints.length-1].x, inputPoints[inputPoints.length-1].y);
 
-
-  if(showResultCoordinate) {
+  if(!showResultCoordinate){
     pointResultGraphic.clear();
-    while(resultCoordinateTexts.length < bezierCurve.syncablePointResult.length-1) {
-      const text = new CoordinateText();
-      text.setYellow();
+    resultCoordinateTexts.forEach(p => viewport.removeChild(p));
+    resultCoordinateTexts = [];
+  } else {
+    // Create or remove the coordinate text
+    while(resultCoordinateTexts.length < bezierCurve.syncablePointResult.length-2) {
+      const text = new CoordinateText(); text.setYellow();
       resultCoordinateTexts.push(text);
       viewport.addChild(text);
     }
-    while(resultCoordinateTexts.length > bezierCurve.syncablePointResult.length-1) {
+    while(resultCoordinateTexts.length > bezierCurve.syncablePointResult.length-2) {
       viewport.removeChild(resultCoordinateTexts.pop());
     }
-
-    for(let i = 0; i < bezierCurve.syncablePointResult.length-1; i++) {
-      const p = bezierCurve.syncablePointResult[i].point2;
-      const text = resultCoordinateTexts[i];
+    for(let i = 1; i < bezierCurve.syncablePointResult.length-1; i++) {
+      const p = bezierCurve.syncablePointResult[i];
+      const text = resultCoordinateTexts[i-1];
       const zoom = viewport.scale.x;
       text.setText(p.x, p.y);
       text.zoomRescale(zoom);
       text.x = p.x + Data.coordinateTextOffsetX/zoom;
       text.y = p.y - Data.coordinateTextOffsetY/zoom;
       drawPointResult(p, pointResultGraphic);
-    }
-  } else {
-    resultCoordinateTexts.forEach(p => viewport.removeChild(p));
-    resultCoordinateTexts = [];
+    } 
   }
 }
 
@@ -181,7 +189,7 @@ function redrawStepPointAndLineResult(){
     drawPointStep(p, stepCirclesGraphic);
   });
 }
-/** ================================================ Redraws ================================================ **/
+/** ================================================ Redraws End ================================================ **/
 
 
 
@@ -244,8 +252,13 @@ function addInput(defaultX, defaultY) {
   if(visualizationState !== 0) {
     InitializeCurves();
   }
+  // The result is always on top
+  movePointAndLineResultToTop();
 }
-
+function movePointAndLineResultToTop() {
+  viewport.setChildIndex(lineResultGraphic, viewport.children.length-1);
+  viewport.setChildIndex(pointResultGraphic, viewport.children.length-1);
+}
 /** Solve the Bezier Curve and draw to Canvas */
 function visualizeCurve() {
   if(inputPoints.length < 3) {
@@ -259,10 +272,7 @@ function visualizeCurve() {
   const iterations = getIteration();
   bezierCurve.clear();
   const startTime = performance.now();
-  if(algorithmId === 0)
-    bezierCurve.generateByDivideAndConquer(p, iterations);
-  else
-    bezierCurve.generateByBruteForce(p, iterations);
+  bezierCurve.generate(p, iterations, algorithmId);
   const timeTaken = (performance.now() - startTime);
   setTimeTaken(timeTaken.toFixed(2));
   logResult(bezierCurve, timeTaken);
@@ -274,8 +284,8 @@ function visualizeCurve() {
  * @param {number} timeTaken 
  */
 function logResult(bezierCurve, timeTaken) {
-  let points = bezierCurve.syncablePointResult.map(p => [p.point2.x, -p.point2.y]); // Flip y
-  points.unshift([bezierCurve.syncablePointResult[0].point1.x, -bezierCurve.syncablePointResult[0].point1.y]); // Flip y
+  let points = bezierCurve.syncablePointResult.map(p => [p.x, -p.y]); // Flip y
+  points.unshift([inputPoints[0].x, -inputPoints[0].y]); // Flip y
   console.log(`Time taken: ${timeTaken} ms`, "\n\nPoints: ", points);
 }
 
@@ -290,18 +300,12 @@ async function showStepsAnimated() {
   stepPoints = [];
   stepLines = [];
   visualizationState = 2;
-  if(algorithmId === 0)
-    await bezierCurve.generateWithStepsByDivideAndConquer(p, iterations, stepDelay*1000, p => {
-      bezierCurveAnimator.animatePointStep(p, () => stepPoints.push(p));
-    }, p => {
-      bezierCurveAnimator.animateLineStep(p, () => stepLines.push(p));
-    });
-  else
-    await bezierCurve.generateWithStepsByBruteForce(p, iterations, stepDelay*1000, p => {
-      bezierCurveAnimator.animatePointStep(p, () => stepPoints.push(p));
-    }, p => {
-      bezierCurveAnimator.animateLineStep(p, () => stepLines.push(p));
-    });
+
+  await bezierCurve.generateWithSteps(p, iterations, algorithmId, stepDelay*1000, p => {
+    bezierCurveAnimator.animatePointStep(p, () => stepPoints.push(p));
+  }, p => {
+    bezierCurveAnimator.animateLineStep(p, () => stepLines.push(p));
+  });
 }
 /** ================================================ GUI Function End ================================================ **/
 
@@ -324,8 +328,9 @@ function toggleDynamicUpdate(e) {
 function InitializeCurves() {
   visualizationState = 0;
   viewport.removeChildren();
-  viewport.addChild(backgroundGraphic, lineResultGraphic, inputLinesGraphic, stepLinesGraphic, animatedStepLinesGraphic, stepCirclesGraphic, animatedStepCirclesGraphic, pointResultGraphic);
+  viewport.addChild(backgroundGraphic, inputLinesGraphic, stepLinesGraphic, animatedStepLinesGraphic, stepCirclesGraphic, animatedStepCirclesGraphic);
   inputPoints.forEach(p => viewport.addChild(p));
+  viewport.addChild(lineResultGraphic, pointResultGraphic); // this thing is always on top
   redrawInputLines();
   lineResultGraphic.clear();
   stepPoints = [];
@@ -370,7 +375,7 @@ function InitializeCurves() {
   });
   document.getElementById('right-sidebar-open').addEventListener('click', (e) => SidebarOpen(sidebarClose, rightSidebar));
   document.getElementById('left-sidebar-open').addEventListener('click', (e) => SidebarOpen(sidebarClose, leftSidebar));
-  const algorithmOptions = [document.getElementById('divide-and-conquer'), document.getElementById('brute-force')];
+  const algorithmOptions = [document.getElementById('divide-and-conquer'), document.getElementById('brute-force'), document.getElementById('brute-force-formulated')];
   algorithmOptions.forEach((el, i) => el.addEventListener('click', () => {
     algorithmId = i;
     AlgorithmOption(algorithmOptions, i);
