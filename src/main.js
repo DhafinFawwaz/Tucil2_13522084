@@ -265,6 +265,7 @@ function visualizeCurve() {
     OpenDialog("Illegal Input", "Please add at least 3 points!. It's impossible to draw a curve with less than 3 points.")
     return;
   }
+  const iterations = getIteration();
   if(iterations < 1) {
     OpenDialog("Illegal Iterations", "Minimum iterations is 1. Please increase it!.")
     return;
@@ -273,7 +274,6 @@ function visualizeCurve() {
   if(visualizationState !== 0) InitializeCurves(); 
   visualizationState = 1;
   const p = inputPoints; // shorthand
-  const iterations = getIteration();
   bezierCurve.clear();
   const startTime = performance.now();
   bezierCurve.generate(p, iterations, algorithmId);
@@ -299,6 +299,7 @@ async function showStepsAnimated() {
     OpenDialog("Illegal Input", "Please add at least 3 points!. It's impossible to draw a curve with less than 3 points.")
     return;
   }
+  const iterations = getIteration();
   if(iterations < 1) {
     OpenDialog("Illegal Iterations", "Minimum iterations is 1. Please increase it!.")
     return;
@@ -306,7 +307,6 @@ async function showStepsAnimated() {
 
   if(visualizationState !== 0) InitializeCurves(); 
   const p = inputPoints;
-  const iterations = getIteration();
   bezierCurve.clear();
   stepPoints = [];
   stepLines = [];
