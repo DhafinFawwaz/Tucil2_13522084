@@ -393,7 +393,7 @@ function InitializeCurves() {
   backgroundGraphic = new BackgroundGraphic(viewport);
   InitializeCurves();
   
-  document.getElementById('add-point').addEventListener('click', () => addInput(randomRange(viewport.left + sidebarWidth*viewport.scale.x, viewport.right - sidebarWidth*viewport.scale.x), randomRange(viewport.bottom, viewport.top)));
+  document.getElementById('add-point').addEventListener('click', () => addInput(randomRange(viewport.left + sidebarWidth/viewport.scale.x, viewport.right - sidebarWidth/viewport.scale.x), randomRange(viewport.bottom, viewport.top)));
   document.getElementById('visualize-curve').addEventListener('click', visualizeCurve);
   document.getElementById('show-steps').addEventListener('click', showStepsAnimated);
   document.getElementById('clear-curve').addEventListener('click', InitializeCurves);
