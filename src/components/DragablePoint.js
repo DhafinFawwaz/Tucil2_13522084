@@ -78,7 +78,7 @@ export class DragablePoint extends Graphics {
     this.viewport = viewport;
     this.eventMode = 'static';
     this.cursor = 'pointer';
-    this.hitArea = new Circle(0, 0, Data.pointRadius*4);
+    this.hitArea = new Circle(0, 0, DragablePoint.pointRadius*4);
     this.on('pointerover', () => {
       this.alpha = 0.75;
     });
