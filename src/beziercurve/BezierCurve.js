@@ -10,10 +10,21 @@ import FormulatedPoint from "./FormulatedPoint";
 export default class BezierCurve{
 
   constructor() {
-    /** @type {SyncablePoint[]} */
+    /** 
+     * All the points that are used in the final result.
+     * @type {SyncablePoint[]} 
+     */
     this.syncablePointResult = [];
-    /** @type {SyncablePoint[]} */
+    /**
+     * All the points that are generated but not used in the final result. Used in dynamic update feature 
+     * @type {SyncablePoint[]} 
+     */
     this.syncablePointWaste = [];
+    /** 
+     * @type {bool} 
+     * if true, all the non output points generated will be pushed to syncablePointWaste
+    */
+    this.dynamicUpdate = true;
   }
 
   /**
@@ -23,15 +34,24 @@ export default class BezierCurve{
    * @param {number} algorithmId 0: divide and conquer, 1: brute force, 2: brute force with formula
    */
   generate(p, iterations, algorithmId) {
-    this.clear();
     this.syncablePointResult.push(p[0]);
-    if(algorithmId === 0)
-      this.generateByDivideAndConquer(p, iterations);
-    else if(algorithmId === 1)
-      this.generateByBruteForce(p, iterations);
-    else if(algorithmId)
-      this.generateByBruteForceFormulated(p, iterations);
-    this.syncablePointResult.push(p[p.length-1]);
+    if(this.dynamicUpdate) {
+      if(algorithmId === 0)
+        this.generateByDivideAndConquerDynamicUpdate(p, iterations);
+      else if(algorithmId === 1)
+        this.generateByBruteForceDynamicUpdate(p, iterations);
+      else if(algorithmId)
+        this.generateByBruteForceFormulated(p, iterations);
+      this.syncablePointResult.push(p[p.length-1]);
+    } else {
+      if(algorithmId === 0)
+        this.generateByDivideAndConquer(p, iterations);
+      else if(algorithmId === 1)
+        this.generateByBruteForce(p, iterations);
+      else if(algorithmId)
+        this.generateByBruteForceFormulated(p, iterations);
+      this.syncablePointResult.push(p[p.length-1]);
+    }
   }
 
   async generateWithSteps(p, iterations, algorithmId, delay, onStepPointFinished, onStepLineFinished) {
@@ -49,11 +69,19 @@ export default class BezierCurve{
    * @param {RefreshCallback} onRefresh 
    */
   refresh(onRefresh) {
-    this.syncablePointWaste.forEach(p => p.sync());
-    this.syncablePointResult.forEach(p => {
-      p.sync();
-      onRefresh(p);
-    });
+    // this.syncablePointWaste.forEach(p => p.sync());
+    // this.syncablePointResult.forEach(p => {
+      //   p.sync();
+      //   onRefresh(p);
+      // });
+      // forEach turns out to be a lot slower than for loop
+    for(let i = 0; i < this.syncablePointWaste.length; i++) {
+      this.syncablePointWaste[i].sync();
+    }
+    for(let i = 0; i < this.syncablePointResult.length; i++) {
+      this.syncablePointResult[i].sync();
+      onRefresh(this.syncablePointResult[i]);
+    }
   }
 
   /** Clear all generated points */
@@ -73,7 +101,7 @@ export default class BezierCurve{
   /**
    * get the next iteration from the current points
    * @param {CenterPoint[]} p current points in this iteration
-   * @returns left points, right points, and all the middle points created
+   * @returns left points, right points, and all the middle points created. All middle points will be used in dynamic update feature
    */
   generateLeftRight(p) {
     const left = [];
@@ -90,11 +118,13 @@ export default class BezierCurve{
     // sub sub sub... center points
     let count = 0;
     for(let i = 2; i < length; i++) {
-      for(let j = 0; j < length-i; j++) {
-        const centerPoint = new CenterPoint(centerList[count+j], centerList[count+j+1]);
+      const lengthMinI = length - i;
+      for(let j = 0; j < lengthMinI; j++) {
+        const countPlusJ = count + j;
+        const centerPoint = new CenterPoint(centerList[countPlusJ], centerList[countPlusJ+1]);
         centerList.push(centerPoint);
       }
-      count += length - i + 1;
+      count += lengthMinI + 1;
     }
 
     // 0 1 2 | 3 4 | 5
@@ -129,14 +159,11 @@ export default class BezierCurve{
    * Generate a quadratic bezier curve based on the points and number of iterations
    * @param {CenterPoint[]} p List of input points. 
    * @param {number} iterations number of iterations. The bigger, the smoother. 
-   * @param {CenterPoint[]} centerPointResult list of result center points.
-   * @param {CenterPoint[]} centerPointWaste list of center points used in processing.
    */
   generateByDivideAndConquer(p, iterations) {
     if(iterations > 0){
-      /** @type {[CenterPoint[], CenterPoint[], CenterPoint[]]} */
-      const [left, right, centerFlatList] = this.generateLeftRight(p);
-      this.syncablePointWaste.push(...centerFlatList); // For dynamic visualization
+      /** @type {[CenterPoint[], CenterPoint[]]} */
+      const [left, right] = this.generateLeftRight(p);
       const iterationMinusOne = iterations - 1;
       this.generateByDivideAndConquer(left, iterationMinusOne);
       this.syncablePointResult.push(left[p.length-1]);
@@ -146,10 +173,25 @@ export default class BezierCurve{
 
   /**
    * Generate a quadratic bezier curve based on the points and number of iterations
+   * @param {CenterPoint[]} p List of input points. 
+   * @param {number} iterations number of iterations. The bigger, the smoother. 
+   */
+  generateByDivideAndConquerDynamicUpdate(p, iterations) {
+    if(iterations > 0){
+      /** @type {[CenterPoint[], CenterPoint[], CenterPoint[]]} */
+      const [left, right, centerFlatList] = this.generateLeftRight(p);
+      this.syncablePointWaste.push(...centerFlatList); // For dynamic visualization
+      const iterationMinusOne = iterations - 1;
+      this.generateByDivideAndConquerDynamicUpdate(left, iterationMinusOne);
+      this.syncablePointResult.push(left[p.length-1]);
+      this.generateByDivideAndConquerDynamicUpdate(right, iterationMinusOne);
+    }
+  }
+
+  /**
+   * Generate a quadratic bezier curve based on the points and number of iterations
    * @param {CenterPoint[]} p number of iterations. The bigger, the smoother. 
    * @param {number} iterations number of iterations. The bigger, the smoother. 
-   * @param {CenterPoint[]} centerPointResult list of center points result.
-   * @param {CenterPoint[]} centerPointWaste list of center points used in processing.
    * @param {number} delay Wait time.
    * @param {OnStepFinishedCallback} onStepPointFinished Call back.
    * @param {OnStepFinishedCallback} onStepLineFinished Call back.
@@ -190,10 +232,8 @@ export default class BezierCurve{
 
   /**
    * Generate a quadratic bezier curve based on the points and number of iterations
-   * @param {CenterPoint[]} p List of input points. 
+   * @param {SyncablePoint[]} p List of input points. 
    * @param {number} iterations number of iterations. The bigger, the smoother. 
-   * @param {CenterPoint[]} centerPointResult list of result center points.
-   * @param {CenterPoint[]} centerPointWaste list of center points used in processing.
    */
   generateByBruteForce(p, iterations) {
 
@@ -208,7 +248,6 @@ export default class BezierCurve{
       for(let i = 0; i < length-1; i++) {
         const centerPoint = new LerpPoint(p[i], p[i+1], progress);
         lerpPointsList.push(centerPoint);
-        this.syncablePointWaste.push(centerPoint);
       }
 
       // sub sub sub... center points
@@ -217,9 +256,46 @@ export default class BezierCurve{
         for(let j = 0; j < length-i; j++) {
           const centerPoint = new LerpPoint(lerpPointsList[count+j], lerpPointsList[count+j+1], progress);
           lerpPointsList.push(centerPoint);
-          this.syncablePointWaste.push(centerPoint);
         }
         count += length - i + 1;
+      }
+      
+      this.syncablePointResult.push(lerpPointsList[lerpPointsList.length-1]);
+    }
+  }
+
+  /**
+   * Generate a quadratic bezier curve based on the points and number of iterations
+   * @param {SyncablePoint[]} p List of input points. 
+   * @param {number} iterations number of iterations. The bigger, the smoother. 
+   */
+  generateByBruteForceDynamicUpdate(p, iterations) {
+
+    const length = p.length;
+
+    for(let k = 0; k < iterations; k++) {
+      /** @type {LerpPoint[]} */
+      const lerpPointsList = [];
+      const progress = (k+1)/(iterations+1);
+
+      // sub center points
+      for(let i = 0; i < length-1; i++) {
+        const centerPoint = new LerpPoint(p[i], p[i+1], progress);
+        lerpPointsList.push(centerPoint);
+        this.syncablePointWaste.push(centerPoint);
+      }
+
+      // sub sub sub... center points
+      let count = 0;
+      for(let i = 2; i < length; i++) {
+        const lengthMinI = length - i;
+        for(let j = 0; j < lengthMinI; j++) {
+          const countPlusJ = count + j;
+          const centerPoint = new LerpPoint(lerpPointsList[countPlusJ], lerpPointsList[countPlusJ+1], progress);
+          lerpPointsList.push(centerPoint);
+          this.syncablePointWaste.push(centerPoint);
+        }
+        count += lengthMinI + 1;
       }
       
       this.syncablePointResult.push(lerpPointsList[lerpPointsList.length-1]);
@@ -231,8 +307,6 @@ export default class BezierCurve{
    * Generate a quadratic bezier curve based on the points and number of iterations
    * @param {CenterPoint[]} p number of iterations. The bigger, the smoother. 
    * @param {number} iterations number of iterations. The bigger, the smoother. 
-   * @param {CenterPoint[]} centerPointResult list of center points result.
-   * @param {CenterPoint[]} centerPointWaste list of center points used in processing.
    * @param {number} delay Wait time.
    * @param {OnStepFinishedCallback} onStepPointFinished Call back.
    * @param {OnStepFinishedCallback} onStepLineFinished Call back.
@@ -258,11 +332,13 @@ export default class BezierCurve{
       // sub sub sub... center points
       let count = 0;
       for(let i = 2; i < length; i++) {
-        for(let j = 0; j < length-i; j++) {
-          const centerPoint = new LerpPoint(lerpPointsList[count+j], lerpPointsList[count+j+1], progress);
+        const lengthMinI = length - i;
+        for(let j = 0; j < lengthMinI; j++) {
+          const countPlusJ = count + j;
+          const centerPoint = new LerpPoint(lerpPointsList[countPlusJ], lerpPointsList[countPlusJ+1], progress);
           lerpPointsList.push(centerPoint);
         }
-        count += length - i + 1;
+        count += lengthMinI + 1;
       }
 
       resultPoints.push(lerpPointsList[lerpPointsList.length-1]);
@@ -313,12 +389,12 @@ export default class BezierCurve{
     }
   }
 
+  // generateByBruteForceFormulated dynamic update is not needed. It doesn't need the syncablePointWaste. All of the points that's generated aren't dependent on the previous iteration.
+
   /**
    * Generate a quadratic bezier curve based on the points and number of iterations
    * @param {CenterPoint[]} p number of iterations. The bigger, the smoother. 
    * @param {number} iterations number of iterations. The bigger, the smoother. 
-   * @param {CenterPoint[]} centerPointResult list of center points result.
-   * @param {CenterPoint[]} centerPointWaste list of center points used in processing.
    * @param {number} delay Wait time.
    * @param {OnStepFinishedCallback} onStepPointFinished Call back.
    * @param {OnStepFinishedCallback} onStepLineFinished Call back.
@@ -359,20 +435,34 @@ export default class BezierCurve{
    * Generate a quadratic bezier curve based on the points and number of iterations
    * @param {CenterPoint[]} p number of iterations. The bigger, the smoother. 
    * @param {number} iterations number of iterations. The bigger, the smoother. 
-   * @param {CenterPoint[]} centerPointResult list of center points.
-   * @param {CenterPoint[]} centerPointWaste list of center points.
    */
   generateQuadratic(p, iterations) {
-    const q0 = new CenterPoint(p[0], p[1]); // non output
-    const q1 = new CenterPoint(p[1], p[2]); // non output
-    const r0 = new CenterPoint(q0, q1); // non output
-    this.syncablePointWaste.push(q0, q1, r0);
-
     if(iterations > 1) {
+      const q0 = new CenterPoint(p[0], p[1]);
+      const q1 = new CenterPoint(p[1], p[2]);
+      const r0 = new CenterPoint(q0, q1);
       iterationMinusOne = iterations - 1;
-      this.generateQuadratic([p[0], q0, r0], iterationMinusOne, this.syncablePointResult, this.syncablePointWaste);
+      this.generateQuadratic([p[0], q0, r0], iterationMinusOne);
       this.syncablePointResult.push(r0);
-      this.generateQuadratic([r0, q1, p[2]], iterationMinusOne, this.syncablePointResult, this.syncablePointWaste);
+      this.generateQuadratic([r0, q1, p[2]], iterationMinusOne);
+    }
+  }
+
+  /**
+   * Generate a quadratic bezier curve based on the points and number of iterations
+   * @param {CenterPoint[]} p number of iterations. The bigger, the smoother. 
+   * @param {number} iterations number of iterations. The bigger, the smoother. 
+   */
+  generateQuadraticDynamicUpdate(p, iterations) {
+    if(iterations > 1) {
+      const q0 = new CenterPoint(p[0], p[1]);
+      const q1 = new CenterPoint(p[1], p[2]);
+      const r0 = new CenterPoint(q0, q1);
+      this.syncablePointWaste.push(q0, q1, r0);
+      iterationMinusOne = iterations - 1;
+      this.generateQuadraticDynamicUpdate([p[0], q0, r0], iterationMinusOne);
+      this.syncablePointResult.push(r0);
+      this.generateQuadraticDynamicUpdate([r0, q1, p[2]], iterationMinusOne);
     }
   }
 
@@ -381,29 +471,23 @@ export default class BezierCurve{
    * Generate a quadratic bezier curve based on the points and number of iterations
    * @param {CenterPoint[]} p number of iterations. The bigger, the smoother. 
    * @param {number} iterations number of iterations. The bigger, the smoother. 
-   * @param {CenterPoint[]} centerPointResult list of center points result.
-   * @param {CenterPoint[]} centerPointWaste list of center points used in processing.
    * @param {number} delay Wait time.
    * @param {OnStepFinishedCallback} onStepPointFinished Call back.
    * @param {OnStepFinishedCallback} onStepLineFinished Call back.
    */
   async generateQuadraticWithSteps(p, iterations, delay, onStepPointFinished, onStepLineFinished) {
-    const q0 = new CenterPoint(p[0], p[1]); // non output
-    const q1 = new CenterPoint(p[1], p[2]); // non output
-    const r0 = new CenterPoint(q0, q1); // non output
+    const q0 = new CenterPoint(p[0], p[1]);
+    const q1 = new CenterPoint(p[1], p[2]);
+    const r0 = new CenterPoint(q0, q1);
 
     const p0p1 = new CenterPoint(p[0], p[1]);
     const p1p2 = new CenterPoint(p[1], p[2]);
     const q0q1 = new CenterPoint(q0, q1);
 
-    // onStepPointFinished(p[1]); await this.wait(delay);
-    // onStepPointFinished(p[2]); await this.wait(delay);
     onStepPointFinished(q0);   await this.wait(delay);
     onStepPointFinished(q1);   await this.wait(delay);
     onStepPointFinished(r0);   await this.wait(delay);
 
-    // onStepLineFinished(p0p1); await this.wait(delay);
-    // onStepLineFinished(p1p2); await this.wait(delay);
     onStepLineFinished(q0q1); await this.wait(delay);
 
     if(iterations > 1) {

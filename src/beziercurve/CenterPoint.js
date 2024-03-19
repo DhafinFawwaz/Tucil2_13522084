@@ -7,7 +7,10 @@ import SyncablePoint from "./SyncablePoint";
  */
 export default class CenterPoint extends SyncablePoint {
 
-  
+  /**
+   * @param {SyncablePoint} point1 
+   * @param {SyncablePoint} point2 
+   */
   constructor(point1, point2) {
     super(point1, point2);
     this.sync();

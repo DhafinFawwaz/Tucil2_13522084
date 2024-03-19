@@ -25,35 +25,54 @@ export function PointInput(name, defaultX, defaultY, onRemove, onChange) {
     if(onRemove) onRemove(button.parent)
   })
   const inputs = template.content.querySelectorAll('input');
-  inputs[0].addEventListener('input', e => {
-    if(!isValid(e)) return;
-    const newPos = new Point(parseFloat(e.target.value), -parseFloat(inputs[1].value)) // Flip y
+  let prevX = defaultX;
+  inputs[0].onchange = e => {
+    if(isValid(e) === 0) {
+      const newVal = parseFloat(prevX);
+      e.target.value = newVal;
+      return;
+    }
+    prevX = parseFloat(e.target.value);
+
+    const newPos = new Point(parseFloat(e.target.value), -prevX) // Flip y
     if(onChange) onChange(newPos)
-  });
-  inputs[1].addEventListener('input', e => {
-    if(!isValid(e)) return;
-    const newPos = new Point(parseFloat(inputs[0].value), -parseFloat(e.target.value)) // Flip y
+  };
+  let prevY = defaultY;
+  inputs[1].onchange = e => {
+    if(isValid(e) === 0) {
+      const newVal = parseFloat(prevY);
+      e.target.value = newVal;
+      return;
+    }
+    prevY = parseFloat(e.target.value);
+
+    const newPos = new Point(parseFloat(inputs[0].value), -prevY) // Flip y
     if(onChange) onChange(newPos)
-  });
+  };
 
   /**
    * @param {Event} e 
-   * @returns 
+   * @returns 0 if not valid, 1 if valid, 2 if typing a float number
    */
   function isValid(e) {
     /** @type {string} */
     const value = e.target.value
+    if(isNaN(value)) return 0;
+    else return 1;
+
+
     // last index is ., return false. it means the user is typing a float number
 
     if(occurrences(value, '.') > 1) {
-      console.log('more than one .')
       e.target.value = replaceStringExceptFirstFound(value, '.', '')
     }
 
-    if(value[value.length - 1] === '.') return false;
+    if(value[value.length - 1] === '.') return 2;
+    // if latest value is not a number, return false
+    if(isNaN(value[value.length - 1]) && value[value.length - 1] !== '.') return 0;
     
-    
-    return !isNaN(value) && value !== ''
+    if(!isNaN(value) && value !== '') return 1
+    return 0;
   }
   
 

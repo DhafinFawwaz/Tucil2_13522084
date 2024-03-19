@@ -8,7 +8,6 @@ import SyncablePoint from "./SyncablePoint";
 export default class FormulatedPoint extends SyncablePoint {
 
   /**
-   * 
    * @param {SyncablePoint[]} pointList 
    * @param {number} progress 
    */

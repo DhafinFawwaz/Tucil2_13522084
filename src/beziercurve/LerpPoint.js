@@ -7,6 +7,11 @@ import SyncablePoint from "./SyncablePoint";
  */
 export default class LerpPoint extends SyncablePoint {
 
+  /**
+   * @param {SyncablePoint} point1 
+   * @param {SyncablePoint} point2 
+   * @param {number} progress 
+   */
   constructor(point1, point2, progress) {
     super(point1, point2);
     this.progress = progress;

@@ -53,7 +53,7 @@ viewport.addEventListener('moved', (e) => {
 
 
 /** To tell when to redraw the curve */
-let visualizationState = 0; // 0: None, 1: Normal, 2: Steps
+let visualizationState = 0; //-1: Initial // 0: None, 1: Normal, 2: Steps
 
 /** @type {HTMLElement} */ 
 const inputListParent = document.getElementById('point-input-list')
@@ -117,7 +117,6 @@ let backgroundGraphic;
 
 /** ====================================================================== **/
 
-let dynamicUpdate = true;
 let showResultCoordinate = false;
 let showInputLines = true;
 
@@ -179,15 +178,25 @@ function redrawPointAndLineResult(){
 /** Redraw step line results */
 function redrawStepPointAndLineResult(){
   stepLinesGraphic.clear();
-  stepLines.forEach(p => {
+  // stepLines.forEach(p => {
+  //   p.sync();
+  //   drawLineStep(p, stepLinesGraphic);
+  // });
+  for(let i = 0; i < stepLines.length; i++) {
+    const p = stepLines[i];
     p.sync();
     drawLineStep(p, stepLinesGraphic);
-  });
+  }
   stepCirclesGraphic.clear();
-  stepPoints.forEach(p => {
+  // stepPoints.forEach(p => {
+  //   p.sync();
+  //   drawPointStep(p, stepCirclesGraphic);
+  // });
+  for(let i = 0; i < stepPoints.length; i++) {
+    const p = stepPoints[i];
     p.sync();
     drawPointStep(p, stepCirclesGraphic);
-  });
+  }
 }
 /** ================================================ Redraws End ================================================ **/
 
@@ -267,19 +276,39 @@ function visualizeCurve() {
   }
   const iterations = getIteration();
   if(iterations < 1) {
-    OpenDialog("Illegal Iterations", "Minimum iterations is 1. Please increase it!.")
+    OpenDialog("Illegal Iterations", "Minimum iterations is 1. Please increase it!")
     return;
   }
 
   if(visualizationState !== 0) InitializeCurves(); 
+  redrawInputLines();
   visualizationState = 1;
   const p = inputPoints; // shorthand
   bezierCurve.clear();
-  const startTime = performance.now();
-  bezierCurve.generate(p, iterations, algorithmId);
-  const timeTaken = (performance.now() - startTime);
-  setTimeTaken(timeTaken.toFixed(2));
-  logResult(bezierCurve, timeTaken);
+  
+  if(bezierCurve.dynamicUpdate) { // this will make the curve has the same time taken.
+
+    // Get the time taken
+    bezierCurve.dynamicUpdate = false;
+    const startTime = performance.now();
+    bezierCurve.generate(p, iterations, algorithmId);
+    const timeTaken = (performance.now() - startTime);
+    setTimeTaken(timeTaken.toFixed(2));
+    logResult(bezierCurve, timeTaken);
+    
+    // Actual dynamic update version. It's fine to calculate this twice because its going to be calculated once every frame anyway
+    bezierCurve.dynamicUpdate = true;
+    bezierCurve.clear();
+    bezierCurve.generate(p, iterations, algorithmId);
+
+  } else {
+    const startTime = performance.now();
+    bezierCurve.generate(p, iterations, algorithmId);
+    const timeTaken = (performance.now() - startTime);
+    setTimeTaken(timeTaken.toFixed(2));
+    logResult(bezierCurve, timeTaken);
+  }
+
   redrawPointAndLineResult();
 }
 
@@ -289,7 +318,6 @@ function visualizeCurve() {
  */
 function logResult(bezierCurve, timeTaken) {
   let points = bezierCurve.syncablePointResult.map(p => [p.x, -p.y]); // Flip y
-  points.unshift([inputPoints[0].x, -inputPoints[0].y]); // Flip y
   console.log(`Time taken: ${timeTaken} ms`, "\n\nPoints: ", points);
 }
 
@@ -301,7 +329,7 @@ async function showStepsAnimated() {
   }
   const iterations = getIteration();
   if(iterations < 1) {
-    OpenDialog("Illegal Iterations", "Minimum iterations is 1. Please increase it!.")
+    OpenDialog("Illegal Iterations", "Minimum iterations is 1. Please increase it!")
     return;
   }
 
@@ -329,7 +357,10 @@ function toggleInputLines(e) {
   inputLinesGraphic.visible = showInputLines;
 }
 function toggleDynamicUpdate(e) {
-  dynamicUpdate = e.target.checked;
+  bezierCurve.dynamicUpdate = e.target.checked;
+  if(visualizationState !== 0) {
+    InitializeCurves();
+  }
 }
 /** ================================================ GUI Checkbox End ================================================ **/
 
@@ -410,11 +441,17 @@ function InitializeCurves() {
   // wheel happens is before viewport.scale.x is updated, so we use zoomed
   viewport.on('zoomed', (e) => {
     const zoom = viewport.scale.x
-    inputPoints.forEach(p => p.zoomRescale(zoom));
+    // inputPoints.forEach(p => p.zoomRescale(zoom));
+    for(let i = 0; i < inputPoints.length; i++) {
+      inputPoints[i].zoomRescale(zoom);
+    }
     Data.lineWidth = 3/zoom;
     Data.pointRadius = 10/zoom;
     backgroundGraphic.zoomRescale(zoom);
-    resultCoordinateTexts.forEach(p => p.zoomRescale(zoom));
+    // resultCoordinateTexts.forEach(p => p.zoomRescale(zoom));
+    for(let i = 0; i < resultCoordinateTexts.length; i++) {
+      resultCoordinateTexts[i].zoomRescale(zoom);
+    }
   });
 
   // on dragging
@@ -435,7 +472,7 @@ function InitializeCurves() {
   const ticker = Ticker.shared;
   ticker.add((dt) => {
     bezierCurveAnimator.update(ticker);
-    if(!dynamicUpdate) return;
+    if(!bezierCurve.dynamicUpdate) return;
 
     redrawInputLines();
     if(visualizationState === 1) redrawPointAndLineResult();

@@ -8,7 +8,6 @@ import SyncablePoint from "./SyncablePoint";
 export default class Line extends SyncablePoint {
 
   /**
-   * 
    * @param {SyncablePoint} point1 
    * @param {SyncablePoint} point2 
    */
