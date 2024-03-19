@@ -262,7 +262,11 @@ function movePointAndLineResultToTop() {
 /** Solve the Bezier Curve and draw to Canvas */
 function visualizeCurve() {
   if(inputPoints.length < 3) {
-    OpenDialog("Illegal Input", "Please add at least 3 points. It's impossible to draw a curve with less than 3 points.")
+    OpenDialog("Illegal Input", "Please add at least 3 points!. It's impossible to draw a curve with less than 3 points.")
+    return;
+  }
+  if(iterations < 1) {
+    OpenDialog("Illegal Iterations", "Minimum iterations is 1. Please increase it!.")
     return;
   }
 
@@ -291,7 +295,14 @@ function logResult(bezierCurve, timeTaken) {
 
 /** Solve the Bezier Curve and draw with step by step animation */
 async function showStepsAnimated() {
-  if(inputPoints.length < 3) return alert("Please add at least 3 points");
+  if(inputPoints.length < 3) {
+    OpenDialog("Illegal Input", "Please add at least 3 points!. It's impossible to draw a curve with less than 3 points.")
+    return;
+  }
+  if(iterations < 1) {
+    OpenDialog("Illegal Iterations", "Minimum iterations is 1. Please increase it!.")
+    return;
+  }
 
   if(visualizationState !== 0) InitializeCurves(); 
   const p = inputPoints;
