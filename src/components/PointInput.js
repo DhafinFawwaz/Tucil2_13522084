@@ -34,7 +34,7 @@ export function PointInput(name, defaultX, defaultY, onRemove, onChange) {
     }
     prevX = parseFloat(e.target.value);
 
-    const newPos = new Point(parseFloat(e.target.value), -prevX) // Flip y
+    const newPos = new Point(parseFloat(e.target.value), -parseFloat(inputs[1].value)) // Flip y
     if(onChange) onChange(newPos)
   };
   let prevY = defaultY;
