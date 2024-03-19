@@ -213,6 +213,8 @@ function addInput(defaultX, defaultY) {
   const name = `P${highestId}`;
 
   const dragablePoint = new DragablePoint(defaultX, defaultY);
+  dragablePoint.zoomRescale(viewport.scale.x);
+  
   dragablePoint.setDragable(app, viewport);
   const coordinateText = new CoordinateText();
   coordinateText.attachToDraggablePoint(dragablePoint, Data.coordinateTextOffsetX, Data.coordinateTextOffsetY, name);
