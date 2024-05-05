@@ -48,6 +48,6 @@ npm run dev
 </p>
 <p align="center" width="100%">
     <img width="49%" src="./test/image32.png"> 
-    <img width="49%" src="./test/image50.png"> 
+    <img width="49%" src="./test/image8.png"> 
 </p>
 
