@@ -34,5 +34,20 @@ npm run dev
 ```
 
 ## 🖼️ Screenshots
-![1](./test/1.png)
+<p align="center" width="100%">
+    <img width="49%" src="./test/image3.png"> 
+    <img width="49%" src="./test/image5.png"> 
+</p>
+<p align="center" width="100%">
+    <img width="49%" src="./test/image6.png"> 
+    <img width="49%" src="./test/image7.png"> 
+</p>
+<p align="center" width="100%">
+    <img width="49%" src="./test/image11.png"> 
+    <img width="49%" src="./test/image12.png"> 
+</p>
+<p align="center" width="100%">
+    <img width="49%" src="./test/image32.png"> 
+    <img width="49%" src="./test/image50.png"> 
+</p>
 
